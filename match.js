@@ -1,0 +1,1606 @@
+"use strict";
+
+/* =========================================
+   THE DOCTOR WITHIN
+   MEDICAL MATCH - SPECIAL POWER-UP ENGINE
+========================================= */
+
+const $ = (id) => document.getElementById(id);
+
+const SIZE = 8;
+const SAVE_KEY = "doctorWithinMedicalMatch";
+
+const TILE_TYPES = [
+  { emoji: "❤️", name: "Heart" },
+  { emoji: "💧", name: "Water drop" },
+  { emoji: "💊", name: "Medicine" },
+  { emoji: "🩺", name: "Stethoscope" },
+  { emoji: "⭐", name: "Star" },
+  { emoji: "🧬", name: "DNA" }
+];
+
+const SPECIALS = {
+  row: "⚡",
+  bomb: "💥",
+  rainbow: "🌈"
+};
+
+let board = [];
+let selectedTile = null;
+let busy = false;
+let levelFinished = false;
+let gameRunId = 0;
+
+let moves = 20;
+let score = 0;
+let heartsCollected = 0;
+let targetHearts = 20;
+let bestCombo = 0;
+let currentCombo = 0;
+let level = 1;
+
+let coins = 0;
+let totalXP = 0;
+let soundEnabled = true;
+let audioContext = null;
+
+/* =========================================
+   SMALL HELPERS
+========================================= */
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function indexOf(row, col) {
+  return row * SIZE + col;
+}
+
+function coordinates(index) {
+  return {
+    row: Math.floor(index / SIZE),
+    col: index % SIZE
+  };
+}
+
+function randomType() {
+  return Math.floor(Math.random() * TILE_TYPES.length);
+}
+
+function makeTile(type = randomType(), special = null) {
+  return { type, special };
+}
+
+function cloneTile(tile) {
+  return tile ? { ...tile } : null;
+}
+
+/* =========================================
+   SAVE SYSTEM
+========================================= */
+
+function loadSave() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
+
+    if (saved && typeof saved === "object") {
+      coins = Math.max(0, Number(saved.coins) || 0);
+      totalXP = Math.max(0, Number(saved.xp) || 0);
+      level = Math.max(1, Number(saved.level) || 1);
+    }
+  } catch (error) {
+    console.warn("Could not load Medical Match progress.", error);
+  }
+
+  updateCoinDisplay();
+}
+
+
+function updateCoinDisplay() {
+  $("coinCount").textContent = coins.toLocaleString();
+}
+
+
+function saveProgress() {
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({
+      coins,
+      xp: totalXP,
+      level,
+      heartsCollected,
+      targetHearts
+    }));
+  } catch (error) {
+    console.warn("Could not save Medical Match progress.", error);
+  }
+}
+/* =========================================
+   DR AFOR — RESTART JOURNEY
+========================================= */
+
+function restartAforJourney() {
+  const confirmed = confirm(
+    "Dr Afor, are you sure you want to restart from Level 1? Your coins and XP will be preserved."
+  );
+
+  if (!confirmed) return;
+
+  level = 1;
+  heartsCollected = 0;
+  score = 0;
+  currentCombo = 0;
+  bestCombo = 0;
+  selectedTile = null;
+  busy = false;
+  levelFinished = false;
+
+  saveProgress();
+
+  startLevel();
+}
+
+/* =========================================
+   SOUND
+========================================= */
+
+function playSound(frequency = 500, duration = 0.08) {
+  if (!soundEnabled) return;
+
+  try {
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    audioContext ||= new AudioContextClass();
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+
+    oscillator.type = "sine";
+    oscillator.frequency.value = frequency;
+
+    gain.gain.setValueAtTime(0.07, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      audioContext.currentTime + duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (error) {
+    // Sound is optional.
+  }
+}
+
+
+/* =========================================
+   MEDICAL MATCH — ARCADE SOUND ENGINE
+========================================= */
+
+function playArcadeSound(type) {
+  if (!soundEnabled) return;
+
+  const soundPatterns = {
+    match: [
+      [520, 0.07],
+      [720, 0.09]
+    ],
+
+    combo: [
+      [520, 0.08],
+      [660, 0.08],
+      [820, 0.1],
+      [1050, 0.15]
+    ],
+
+    bomb: [
+      [180, 0.18],
+      [110, 0.22]
+    ],
+
+    lightning: [
+      [1100, 0.05],
+      [1450, 0.07],
+      [900, 0.08]
+    ],
+
+    rainbow: [
+      [600, 0.08],
+      [800, 0.08],
+      [1050, 0.1],
+      [1350, 0.16]
+    ],
+
+    victory: [
+      [523, 0.12],
+      [659, 0.12],
+      [784, 0.12],
+      [1047, 0.25]
+    ]
+  };
+
+  const pattern = soundPatterns[type];
+  if (!pattern) return;
+
+  pattern.forEach(([frequency, duration], index) => {
+    setTimeout(() => {
+      if (soundEnabled) playSound(frequency, duration);
+    }, index * 85);
+  });
+}
+
+$("soundButton").addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+  $("soundButton").textContent = soundEnabled ? "🔊" : "🔇";
+
+  if (soundEnabled) playSound(650);
+});
+
+/* =========================================
+   BOARD GENERATION
+========================================= */
+
+function hasMatchAt(row, col, type) {
+  return (
+    (col >= 2 &&
+      board[row][col - 1]?.type === type &&
+      board[row][col - 2]?.type === type) ||
+    (row >= 2 &&
+      board[row - 1][col]?.type === type &&
+      board[row - 2][col]?.type === type)
+  );
+}
+
+function generateBoard() {
+  let attempts = 0;
+
+  do {
+    board = [];
+
+    for (let row = 0; row < SIZE; row++) {
+      board[row] = [];
+
+      for (let col = 0; col < SIZE; col++) {
+        let tile;
+
+        do {
+          tile = makeTile();
+        } while (hasMatchAt(row, col, tile.type));
+
+        board[row][col] = tile;
+      }
+    }
+
+    attempts++;
+  } while (!hasPossibleMove() && attempts < 100);
+}
+
+/* =========================================
+   RENDER BOARD
+========================================= */
+
+function renderBoard() {
+  const boardElement = $("gameBoard");
+  boardElement.innerHTML = "";
+
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      const tileData = board[row][col];
+      const index = indexOf(row, col);
+
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.className = "tile";
+      tile.dataset.index = index;
+      tile.dataset.row = row;
+      tile.dataset.col = col;
+
+      if (tileData) {
+        tile.textContent = tileData.special
+          ? SPECIALS[tileData.special]
+          : TILE_TYPES[tileData.type].emoji;
+
+        tile.setAttribute(
+          "aria-label",
+          tileData.special
+            ? `${tileData.special} power-up`
+            : TILE_TYPES[tileData.type].name
+        );
+
+        if (tileData.special) {
+          tile.classList.add("special-tile", `special-${tileData.special}`);
+        }
+      }
+
+      if (
+        selectedTile &&
+        selectedTile.row === row &&
+        selectedTile.col === col
+      ) {
+        tile.classList.add("selected");
+      }
+
+      tile.disabled = busy || levelFinished;
+      boardElement.appendChild(tile);
+    }
+  }
+}
+
+function getTileElement(row, col) {
+  return $("gameBoard").querySelector(
+    `[data-index="${indexOf(row, col)}"]`
+  );
+}
+
+/* =========================================
+   FIND MATCH RUNS
+========================================= */
+
+function findMatchRuns() {
+  const runs = [];
+
+  // Horizontal runs
+  for (let row = 0; row < SIZE; row++) {
+    let col = 0;
+
+    while (col < SIZE) {
+      const tile = board[row][col];
+
+      if (!tile) {
+        col++;
+        continue;
+      }
+
+      const type = tile.type;
+      let end = col + 1;
+
+      while (
+        end < SIZE &&
+        board[row][end] &&
+        board[row][end].type === type
+      ) {
+        end++;
+      }
+
+      if (end - col >= 3) {
+        const cells = [];
+
+        for (let c = col; c < end; c++) {
+          cells.push(indexOf(row, c));
+        }
+
+        runs.push({
+          type,
+          direction: "horizontal",
+          cells
+        });
+      }
+
+      col = end;
+    }
+  }
+
+  // Vertical runs
+  for (let col = 0; col < SIZE; col++) {
+    let row = 0;
+
+    while (row < SIZE) {
+      const tile = board[row][col];
+
+      if (!tile) {
+        row++;
+        continue;
+      }
+
+      const type = tile.type;
+      let end = row + 1;
+
+      while (
+        end < SIZE &&
+        board[end][col] &&
+        board[end][col].type === type
+      ) {
+        end++;
+      }
+
+      if (end - row >= 3) {
+        const cells = [];
+
+        for (let r = row; r < end; r++) {
+          cells.push(indexOf(r, col));
+        }
+
+        runs.push({
+          type,
+          direction: "vertical",
+          cells
+        });
+      }
+
+      row = end;
+    }
+  }
+
+  return runs;
+}
+
+function findMatches() {
+  const matches = new Set();
+
+  for (const run of findMatchRuns()) {
+    for (const cell of run.cells) {
+      matches.add(cell);
+    }
+  }
+
+  return matches;
+}
+
+/* =========================================
+   GROUP MATCHES INTO COMBINATIONS
+========================================= */
+
+function getMatchGroups(runs) {
+  const groups = [];
+  const visited = new Set();
+
+  const cellsByType = new Map();
+
+  for (const run of runs) {
+    if (!cellsByType.has(run.type)) {
+      cellsByType.set(run.type, new Set());
+    }
+
+    for (const cell of run.cells) {
+      cellsByType.get(run.type).add(cell);
+    }
+  }
+
+  for (const [type, cells] of cellsByType) {
+    for (const start of cells) {
+      if (visited.has(start)) continue;
+
+      const group = [];
+      const queue = [start];
+
+      visited.add(start);
+
+      while (queue.length) {
+        const current = queue.pop();
+        group.push(current);
+
+        const { row, col } = coordinates(current);
+
+        const neighbours = [
+          [row - 1, col],
+          [row + 1, col],
+          [row, col - 1],
+          [row, col + 1]
+        ];
+
+        for (const [r, c] of neighbours) {
+          if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) {
+            continue;
+          }
+
+          const next = indexOf(r, c);
+
+          if (
+            cells.has(next) &&
+            !visited.has(next)
+          ) {
+            visited.add(next);
+            queue.push(next);
+          }
+        }
+      }
+
+      groups.push({ type, cells: group });
+    }
+  }
+
+  return groups;
+}
+
+/* =========================================
+   DECIDE WHICH POWER-UP TO CREATE
+========================================= */
+
+function getSpecialForGroup(group, runs) {
+  const cells = new Set(group.cells);
+
+  const horizontalRuns = runs.filter(run =>
+    run.direction === "horizontal" &&
+    run.type === group.type &&
+    run.cells.some(cell => cells.has(cell))
+  );
+
+  const verticalRuns = runs.filter(run =>
+    run.direction === "vertical" &&
+    run.type === group.type &&
+    run.cells.some(cell => cells.has(cell))
+  );
+
+  // T- and L-shaped intersections create a Heart Bomb.
+  if (horizontalRuns.length && verticalRuns.length) {
+    return "bomb";
+  }
+
+  const longestRun = Math.max(
+    0,
+    ...horizontalRuns.map(run => run.cells.length),
+    ...verticalRuns.map(run => run.cells.length)
+  );
+
+  // A straight line of five or more creates a Rainbow Star.
+  if (longestRun >= 5) {
+    return "rainbow";
+  }
+
+  // A straight line of four creates Healing Lightning.
+  if (longestRun >= 4) {
+    return "row";
+  }
+
+  return null;
+}
+
+/* =========================================
+   FIND VALID MOVES
+========================================= */
+
+function hasPossibleMove() {
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      for (const [dr, dc] of [[0, 1], [1, 0]]) {
+        const nextRow = row + dr;
+        const nextCol = col + dc;
+
+        if (nextRow >= SIZE || nextCol >= SIZE) continue;
+
+        const first = board[row][col];
+        const second = board[nextRow][nextCol];
+
+        board[row][col] = second;
+        board[nextRow][nextCol] = first;
+
+        const valid =
+          Boolean(first?.special) ||
+          Boolean(second?.special) ||
+          findMatches().size > 0;
+
+        board[row][col] = first;
+        board[nextRow][nextCol] = second;
+
+        if (valid) return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/* =========================================
+   SELECT AND SWAP
+========================================= */
+
+let pointerStart = null;
+let pointerMoved = false;
+
+$("gameBoard").addEventListener("pointerdown", event => {
+  const tile = event.target.closest(".tile");
+  if (!tile || busy || levelFinished) return;
+
+  pointerStart = {
+    row: Number(tile.dataset.row),
+    col: Number(tile.dataset.col),
+    x: event.clientX,
+    y: event.clientY,
+    pointerId: event.pointerId
+  };
+
+  pointerMoved = false;
+});
+
+$("gameBoard").addEventListener("pointerup", async event => {
+  const start = pointerStart;
+  pointerStart = null;
+  pointerMoved = false;
+
+  if (!start || busy || levelFinished) return;
+
+  const tile = event.target.closest(".tile");
+  const dx = event.clientX - start.x;
+  const dy = event.clientY - start.y;
+  const distanceMoved = Math.hypot(dx, dy);
+
+  // A deliberate finger/mouse drag swaps with the adjacent tile in that direction.
+  if (distanceMoved >= 18) {
+    pointerMoved = true;
+
+    let dr = 0;
+    let dc = 0;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      dc = dx > 0 ? 1 : -1;
+    } else {
+      dr = dy > 0 ? 1 : -1;
+    }
+
+    const targetRow = start.row + dr;
+    const targetCol = start.col + dc;
+
+    if (
+      targetRow >= 0 && targetRow < SIZE &&
+      targetCol >= 0 && targetCol < SIZE
+    ) {
+      selectedTile = null;
+      await swapTiles(start, { row: targetRow, col: targetCol });
+    }
+
+    return;
+  }
+
+  // A short tap keeps the original two-tile selection controls.
+  if (!tile) return;
+
+  const row = Number(tile.dataset.row);
+  const col = Number(tile.dataset.col);
+
+  if (!Number.isInteger(row) || !Number.isInteger(col)) return;
+
+  if (!selectedTile) {
+    selectedTile = { row, col };
+    renderBoard();
+    playSound(430, 0.05);
+    return;
+  }
+
+  const first = selectedTile;
+  const distance = Math.abs(first.row - row) + Math.abs(first.col - col);
+
+  if (distance === 0) {
+    selectedTile = null;
+    renderBoard();
+    return;
+  }
+
+  if (distance !== 1) {
+    selectedTile = { row, col };
+    renderBoard();
+    return;
+  }
+
+  selectedTile = null;
+  renderBoard();
+  await swapTiles(first, { row, col });
+});
+
+$("gameBoard").addEventListener("pointercancel", () => {
+  pointerStart = null;
+});
+
+async function swapTiles(first, second) {
+  if (busy || levelFinished || moves <= 0) return;
+
+  busy = true;
+  renderBoard();
+
+  const firstTile = board[first.row][first.col];
+  const secondTile = board[second.row][second.col];
+
+  swapPositions(first, second);
+  renderBoard();
+
+  await wait(140);
+
+  const specialSwap =
+    Boolean(firstTile?.special) ||
+    Boolean(secondTile?.special);
+
+  if (!specialSwap && findMatches().size === 0) {
+    swapPositions(first, second);
+    renderBoard();
+
+    $("gameMessage").textContent =
+      "No match yet! Try another pair.";
+
+    playSound(180, 0.1);
+
+    busy = false;
+    renderBoard();
+    return;
+  }
+
+  moves--;
+  updateStats();
+
+  currentCombo = 0;
+
+  const runId = gameRunId;
+
+  if (firstTile?.special && secondTile?.special) {
+    // Two power-ups combine!
+    const affected = new Set();
+
+    activateSpecialCombo(
+      first,
+      second,
+      firstTile,
+      secondTile,
+      affected
+    );
+
+    await clearCells(affected, runId);
+
+  } else if (specialSwap) {
+    // One power-up combines with a normal tile.
+    const affected = new Set();
+    const triggered = new Set();
+
+    if (firstTile?.special) {
+      activateSpecial(
+        second,
+        secondTile?.type,
+        affected,
+        triggered
+      );
+    }
+
+    if (secondTile?.special) {
+      activateSpecial(
+        first,
+        firstTile?.type,
+        affected,
+        triggered
+      );
+    }
+
+    await clearCells(affected, runId);
+  }
+
+  if (runId !== gameRunId) return;
+
+  await clearCascades(runId, second);
+
+  if (runId !== gameRunId) return;
+
+  busy = false;
+  renderBoard();
+  checkGameStatus();
+}
+
+function swapPositions(first, second) {
+  const temporary = board[first.row][first.col];
+
+  board[first.row][first.col] = board[second.row][second.col];
+  board[second.row][second.col] = temporary;
+}
+
+/* =========================================
+   SPECIAL POWER-UP COMBINATIONS
+========================================= */
+
+function activateSpecialCombo(
+  firstPosition,
+  secondPosition,
+  firstTile,
+  secondTile,
+  affected
+) {
+  const firstSpecial = firstTile.special;
+  const secondSpecial = secondTile.special;
+
+  const firstIndex = indexOf(
+    firstPosition.row,
+    firstPosition.col
+  );
+
+  const secondIndex = indexOf(
+    secondPosition.row,
+    secondPosition.col
+  );
+
+  const triggered = new Set([
+    firstIndex,
+    secondIndex
+  ]);
+
+  const addCell = (row, col) => {
+    if (
+      row >= 0 &&
+      row < SIZE &&
+      col >= 0 &&
+      col < SIZE
+    ) {
+      affected.add(indexOf(row, col));
+    }
+  };
+
+  const addRow = row => {
+    for (let col = 0; col < SIZE; col++) {
+      addCell(row, col);
+    }
+  };
+
+  const addColumn = col => {
+    for (let row = 0; row < SIZE; row++) {
+      addCell(row, col);
+    }
+  };
+
+  const addBombArea = (row, col, radius = 1) => {
+    for (
+      let r = row - radius;
+      r <= row + radius;
+      r++
+    ) {
+      for (
+        let c = col - radius;
+        c <= col + radius;
+        c++
+      ) {
+        addCell(r, c);
+      }
+    }
+  };
+
+  const firstIsRainbow = firstSpecial === "rainbow";
+  const secondIsRainbow = secondSpecial === "rainbow";
+
+  const firstIsBomb = firstSpecial === "bomb";
+  const secondIsBomb = secondSpecial === "bomb";
+
+  const firstIsLightning = firstSpecial === "row";
+  const secondIsLightning = secondSpecial === "row";
+
+  const isDoubleRainbow =
+    firstIsRainbow && secondIsRainbow;
+
+  const isRainbowBomb =
+    (firstIsRainbow && secondIsBomb) ||
+    (secondIsRainbow && firstIsBomb);
+
+  const isRainbowLightning =
+    (firstIsRainbow && secondIsLightning) ||
+    (secondIsRainbow && firstIsLightning);
+
+  const isDoubleBomb =
+    firstIsBomb && secondIsBomb;
+
+  const isDoubleLightning =
+    firstIsLightning && secondIsLightning;
+
+  const isBombLightning =
+    (firstIsBomb && secondIsLightning) ||
+    (secondIsBomb && firstIsLightning);
+
+  if (isDoubleRainbow) {
+    // 🌈 + 🌈 = clear the entire board.
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        addCell(row, col);
+      }
+    }
+
+    $("gameMessage").textContent =
+      "🌈🌈 MEGA RAINBOW! TOTAL BOARD CLEAR!";
+
+    playSound(1100, 0.35);
+
+  } else if (isRainbowBomb) {
+    // 🌈 + 💥 = turn every matching tile into a bomb blast.
+    const targetType = firstIsRainbow
+      ? secondTile.type
+      : firstTile.type;
+
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        if (board[row][col]?.type === targetType) {
+          addBombArea(row, col, 1);
+        }
+      }
+    }
+
+    $("gameMessage").textContent =
+      "🌈💥 RAINBOW BOMB STORM!";
+
+    playSound(1050, 0.3);
+
+  } else if (isRainbowLightning) {
+    // 🌈 + ⚡ = cross-shaped lightning across matching tiles.
+    const targetType = firstIsRainbow
+      ? secondTile.type
+      : firstTile.type;
+
+    for (let row = 0; row < SIZE; row++) {
+      for (let col = 0; col < SIZE; col++) {
+        if (board[row][col]?.type === targetType) {
+          addRow(row);
+          addColumn(col);
+        }
+      }
+    }
+
+    $("gameMessage").textContent =
+      "🌈⚡ RAINBOW LIGHTNING!";
+
+    playSound(1000, 0.3);
+
+  } else if (isDoubleBomb) {
+    // 💥 + 💥 = two overlapping large explosions.
+    addBombArea(
+      firstPosition.row,
+      firstPosition.col,
+      2
+    );
+
+    addBombArea(
+      secondPosition.row,
+      secondPosition.col,
+      2
+    );
+
+    $("gameMessage").textContent =
+      "💥💥 MEGA EXPLOSION!";
+
+    playSound(900, 0.35);
+
+  } else if (isDoubleLightning) {
+    // ⚡ + ⚡ = cross-shaped board-wide lightning.
+    addRow(firstPosition.row);
+    addColumn(firstPosition.col);
+
+    addRow(secondPosition.row);
+    addColumn(secondPosition.col);
+
+    $("gameMessage").textContent =
+      "⚡⚡ DOUBLE LIGHTNING STRIKE!";
+
+    playSound(950, 0.3);
+
+  } else if (isBombLightning) {
+    // 💥 + ⚡ = three rows and three columns.
+    const bombPosition = firstIsBomb
+      ? firstPosition
+      : secondPosition;
+
+    for (
+      let offset = -1;
+      offset <= 1;
+      offset++
+    ) {
+      addRow(bombPosition.row + offset);
+      addColumn(bombPosition.col + offset);
+    }
+
+    $("gameMessage").textContent =
+      "💥⚡ MEGA HEALING BLAST!";
+
+    playSound(950, 0.3);
+  }
+
+  // Activate any additional special tiles caught in the combo.
+  // The original two power-ups are protected from being triggered twice.
+  for (const cell of [...affected]) {
+    const { row, col } = coordinates(cell);
+    const tile = board[row][col];
+
+    if (tile?.special && !triggered.has(cell)) {
+      activateSpecial(
+        { row, col },
+        tile.type,
+        affected,
+        triggered
+      );
+    }
+  }
+}
+
+/* =========================================
+   ACTIVATE SPECIAL POWER-UPS
+========================================= */
+
+/* =========================================
+   MEDICAL MATCH — POWER-UP VISUAL CONTROLLER
+========================================= */
+
+function triggerMedicalEffect(effect) {
+  const boardElement = $("gameBoard");
+  const frameElement = document.querySelector(".board-frame");
+
+  if (!boardElement || !frameElement) return;
+
+  const effects = {
+    bomb: ["board-shake", "explosion-flash"],
+    lightning: ["board-shake", "explosion-flash"],
+    rainbow: ["board-shake", "rainbow-burst"]
+  };
+
+  const classes = effects[effect];
+  if (!classes) return;
+
+  [boardElement, frameElement].forEach(element => {
+    classes.forEach(className => {
+      element.classList.remove(className);
+    });
+
+    void element.offsetWidth;
+
+    classes.forEach(className => {
+      element.classList.add(className);
+    });
+  });
+
+  setTimeout(() => {
+    [boardElement, frameElement].forEach(element => {
+      classes.forEach(className => {
+        element.classList.remove(className);
+      });
+    });
+  }, 700);
+}
+
+function activateSpecial(position, targetType, affected, triggered = new Set()) {
+  // Use a queue so chain reactions cannot repeatedly trigger the same tile.
+  const queue = [{ position, targetType }];
+
+  while (queue.length) {
+    const current = queue.shift();
+    const row = current.position.row;
+    const col = current.position.col;
+    const cellIndex = indexOf(row, col);
+
+    if (triggered.has(cellIndex)) continue;
+    triggered.add(cellIndex);
+
+    const tile = board[row]?.[col];
+    if (!tile?.special) continue;
+
+    const special = tile.special;
+    const newlyAffected = [];
+
+    if (special === "rainbow") {
+      const chosenType = Number.isInteger(current.targetType)
+        ? current.targetType
+        : tile.type;
+
+      for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+          if (board[r][c]?.type === chosenType) {
+            newlyAffected.push(indexOf(r, c));
+          }
+        }
+      }
+
+      $("gameMessage").textContent = "🌈 RAINBOW POWER!";
+      triggerMedicalEffect("rainbow");
+      playArcadeSound("rainbow");
+      playSound(950, 0.2);
+
+    } else if (special === "row") {
+      for (let c = 0; c < SIZE; c++) {
+        newlyAffected.push(indexOf(row, c));
+      }
+
+      $("gameMessage").textContent = "⚡ HEALING LIGHTNING!";
+      triggerMedicalEffect("lightning");
+      playArcadeSound("lightning");
+      playSound(780, 0.16);
+
+    } else if (special === "bomb") {
+      for (let r = row - 1; r <= row + 1; r++) {
+        for (let c = col - 1; c <= col + 1; c++) {
+          if (r >= 0 && r < SIZE && c >= 0 && c < SIZE) {
+            newlyAffected.push(indexOf(r, c));
+          }
+        }
+      }
+
+      $("gameMessage").textContent = "💥 HEART BOMB!";
+      triggerMedicalEffect("bomb");
+      playArcadeSound("bomb");
+      playSound(650, 0.2);
+    }
+
+    for (const cell of newlyAffected) {
+      affected.add(cell);
+
+      const { row: r, col: c } = coordinates(cell);
+      const caught = board[r][c];
+
+      if (caught?.special && !triggered.has(cell)) {
+        queue.push({
+          position: { row: r, col: c },
+          targetType: tile.type
+        });
+      }
+    }
+  }
+}
+
+/* =========================================
+   CLEAR MATCHES AND CREATE POWER-UPS
+========================================= */
+
+
+/* =========================================
+   MEDICAL MATCH — COMBO ANNOUNCEMENTS
+========================================= */
+
+function showComboAnnouncement(cascade, matchCount) {
+  const container = document.querySelector(".board-section");
+  if (!container) return;
+
+  let message;
+
+  if (cascade >= 4) {
+    message = "🚀 UNSTOPPABLE!";
+  } else if (cascade === 3) {
+    message = "🏆 MEDICAL MASTER!";
+  } else if (cascade === 2) {
+    message = "🔥 SUPER COMBO!";
+  } else if (matchCount >= 6) {
+    message = "💎 INCREDIBLE!";
+  } else if (matchCount >= 5) {
+    message = "🌟 AMAZING!";
+  } else if (matchCount >= 4) {
+    message = "⚡ GREAT MATCH!";
+  } else {
+    message = "✨ NICE!";
+  }
+
+  const announcement = document.createElement("div");
+  announcement.className = "combo-announcement";
+  announcement.textContent = message;
+
+  container.appendChild(announcement);
+
+  setTimeout(() => {
+    announcement.remove();
+  }, 1000);
+}
+
+
+/* =========================================
+   MEDICAL MATCH — SCORE AND HEART REWARDS
+========================================= */
+
+function showRewardBurst(points, hearts) {
+  const container = document.querySelector(".board-section");
+  if (!container) return;
+
+  const burst = document.createElement("div");
+
+  burst.className = "reward-burst";
+
+  if (hearts > 0) {
+    burst.classList.add("heart-reward");
+  }
+
+  burst.innerHTML = `
+    <strong>+${points.toLocaleString()} POINTS</strong>
+    ${hearts > 0 ? `<small>❤️ +${hearts} HEART${hearts === 1 ? "" : "S"}!</small>` : ""}
+  `;
+
+  container.appendChild(burst);
+
+  setTimeout(() => burst.remove(), 1150);
+}
+
+async function clearCascades(runId, preferredPosition = null) {
+  let cascade = 0;
+
+  while (true) {
+    if (runId !== gameRunId) return;
+
+    const runs = findMatchRuns();
+
+    if (!runs.length) break;
+
+    cascade++;
+    currentCombo = cascade;
+    bestCombo = Math.max(bestCombo, cascade);
+
+    const groups = getMatchGroups(runs);
+    const toClear = new Set();
+    const creations = [];
+
+    for (const group of groups) {
+      const special = getSpecialForGroup(group, runs);
+
+      let anchor = null;
+
+      if (
+        preferredPosition &&
+        group.cells.includes(
+          indexOf(preferredPosition.row, preferredPosition.col)
+        )
+      ) {
+        anchor = indexOf(
+          preferredPosition.row,
+          preferredPosition.col
+        );
+      } else {
+        anchor = group.cells[Math.floor(group.cells.length / 2)];
+      }
+
+      if (special) {
+        creations.push({
+          index: anchor,
+          type: group.type,
+          special
+        });
+      }
+
+      for (const cell of group.cells) {
+        if (cell !== anchor || !special) {
+          toClear.add(cell);
+        }
+      }
+    }
+
+    // Count every matched heart, including a tile kept as a new power-up.
+    const heartCredits = new Set();
+
+    for (const group of groups) {
+      for (const cell of group.cells) {
+        const { row, col } = coordinates(cell);
+
+        if (board[row][col]?.type === 0) {
+          heartCredits.add(cell);
+        }
+      }
+    }
+
+    // Existing power-ups caught in a match also activate, with loop protection.
+    const triggeredSpecials = new Set();
+
+    for (const cell of [...toClear]) {
+      const { row, col } = coordinates(cell);
+      const tile = board[row][col];
+
+      if (tile?.special && !triggeredSpecials.has(cell)) {
+        const affected = new Set();
+
+        activateSpecial(
+          { row, col },
+          tile.type,
+          affected,
+          triggeredSpecials
+        );
+
+        for (const extra of affected) {
+          toClear.add(extra);
+
+          const { row: r, col: c } = coordinates(extra);
+
+          if (board[r][c]?.type === 0) {
+            heartCredits.add(extra);
+          }
+        }
+      }
+    }
+
+    heartsCollected += heartCredits.size;
+
+    const points = toClear.size * 60 * cascade;
+    score += points;
+    showRewardBurst(points, heartCredits.size);
+
+    $("gameMessage").textContent =
+      cascade > 1
+        ? `🔥 ${cascade}x COMBO! Amazing!`
+        : `✨ ${toClear.size} pieces matched!`;
+        showComboAnnouncement(cascade, toClear.size);
+        playArcadeSound(cascade > 1 ? "combo" : "match");
+
+    updateStats();
+
+    for (const cell of toClear) {
+      const { row, col } = coordinates(cell);
+      const element = getTileElement(row, col);
+
+      if (element) element.classList.add("matched");
+    }
+
+    await wait(270);
+
+    if (runId !== gameRunId) return;
+
+    for (const cell of toClear) {
+      const { row, col } = coordinates(cell);
+      board[row][col] = null;
+    }
+
+    for (const creation of creations) {
+      const { row, col } = coordinates(creation.index);
+
+      board[row][col] = makeTile(
+        creation.type,
+        creation.special
+      );
+    }
+
+    dropTiles();
+    renderBoard();
+
+    await wait(230);
+    preferredPosition = null;
+  }
+
+  if (currentCombo > 1) {
+    $("gameMessage").textContent =
+      `Fantastic! ${currentCombo} cascades!`;
+
+    playSound(900, 0.16);
+  }
+
+  updateStats();
+}
+
+/* =========================================
+   CLEAR POWER-UP EFFECTS
+========================================= */
+
+async function clearCells(cells, runId) {
+  if (runId !== gameRunId) return;
+
+  const validCells = [...cells].filter(cell => {
+    const { row, col } = coordinates(cell);
+    return Boolean(board[row][col]);
+  });
+
+  const heartMatches = validCells.filter(cell => {
+    const { row, col } = coordinates(cell);
+    return board[row][col]?.type === 0;
+  }).length;
+
+  heartsCollected += heartMatches;
+  score += validCells.length * 100;
+
+  updateStats();
+
+  for (const cell of validCells) {
+    const { row, col } = coordinates(cell);
+    const element = getTileElement(row, col);
+
+    if (element) element.classList.add("matched");
+  }
+
+  await wait(280);
+
+  if (runId !== gameRunId) return;
+
+  for (const cell of validCells) {
+    const { row, col } = coordinates(cell);
+    board[row][col] = null;
+  }
+
+  dropTiles();
+  renderBoard();
+
+  await wait(230);
+}
+
+/* =========================================
+   DROP AND REFILL
+========================================= */
+
+function dropTiles() {
+  for (let col = 0; col < SIZE; col++) {
+    const remaining = [];
+
+    for (let row = SIZE - 1; row >= 0; row--) {
+      if (board[row][col]) {
+        remaining.push(board[row][col]);
+      }
+    }
+
+    for (let row = SIZE - 1; row >= 0; row--) {
+      const position = SIZE - 1 - row;
+
+      board[row][col] =
+        position < remaining.length
+          ? remaining[position]
+          : makeTile();
+    }
+  }
+}
+
+/* =========================================
+   STATS
+========================================= */
+
+function updateStats() {
+  $("score").textContent = score;
+  $("movesLeft").textContent = moves;
+  $("bestCombo").textContent = bestCombo;
+
+  $("collectedCount").textContent = heartsCollected;
+  $("targetCount").textContent = targetHearts;
+
+  const progress = Math.min(
+    100,
+    (heartsCollected / targetHearts) * 100
+  );
+
+  $("missionProgress").style.width = `${progress}%`;
+  $("levelNumber").textContent = level;
+}
+
+/* =========================================
+   LEVEL STATUS
+========================================= */
+
+function checkGameStatus() {
+  if (heartsCollected >= targetHearts) {
+    finishLevel(true);
+    return;
+  }
+
+  if (moves <= 0) {
+    finishLevel(false);
+    return;
+  }
+
+  if (!hasPossibleMove()) {
+    $("gameMessage").textContent =
+      "Fresh board! Let's keep matching!";
+
+    generateBoard();
+    renderBoard();
+  }
+}
+
+function finishLevel(won) {
+  if (levelFinished) return;
+
+  levelFinished = true;
+  busy = false;
+  selectedTile = null;
+
+  const earnedCoins = won ? 30 + level * 5 : 5;
+  const earnedXP = won ? 50 + level * 10 : 5;
+
+  coins += earnedCoins;
+  totalXP += earnedXP;
+
+  saveProgress();
+  updateCoinDisplay();
+
+  $("resultEmoji").textContent = won ? "🎉" : "💪";
+
+  $("resultEyebrow").textContent = won
+    ? "LEVEL COMPLETE"
+    : "NICE TRY";
+
+$("resultTitle").textContent = won
+  ? "Dr Afor, YOU DID IT! ❤️"
+  : "Keep believing, Dr Afor! One day at a time!";
+
+  $("resultMessage").textContent = won
+  ? "This is only the beginning, Dr Afor. Never stop believing in the amazing doctor you're becoming. I'm proud of you! ❤️"
+  : `Every great doctor faces challenges, Dr Afor. Don't give up on your dream. I'm rooting for you! ❤️`;
+
+  $("resultScore").textContent = score;
+  $("resultCoins").textContent = earnedCoins;
+  $("resultXP").textContent = earnedXP;
+
+  $("nextLevelButton").textContent =
+    won ? "Next level →" : "Try again ↻";
+
+  $("nextLevelButton").dataset.won = String(won);
+
+  $("resultOverlay").classList.remove("hidden");
+
+  // Unlock Dr Afor's personal letter after his first victory.
+if (won && !localStorage.getItem("aforLetterUnlocked")) {
+  setTimeout(() => {
+    const letter = $("aforLetter");
+
+    if (letter) {
+      letter.classList.remove("hidden");
+      localStorage.setItem("aforLetterUnlocked", "true");
+    }
+  }, 1800);
+}
+
+  if (won) {
+  playArcadeSound("victory");
+} else {
+  playSound(250, 0.2);
+}
+  renderBoard();
+}
+
+/* =========================================
+   START / RESTART
+========================================= */
+
+function startLevel() {
+  gameRunId++;
+
+  selectedTile = null;
+  busy = false;
+  levelFinished = false;
+
+  moves = 20;
+  score = 0;
+  heartsCollected = 0;
+  bestCombo = 0;
+  currentCombo = 0;
+
+  targetHearts = Math.min(20 + (level - 1) * 5, 50);
+
+  $("resultOverlay").classList.add("hidden");
+
+  generateBoard();
+  updateStats();
+  renderBoard();
+
+  $("gameMessage").textContent =
+    "Match three or more pieces. Try making four or five!";
+}
+
+$("restartButton").addEventListener("click", () => {
+  if (busy) return;
+
+  startLevel();
+  playSound(450);
+});
+
+$("restartJourneyButton").addEventListener("click", () => {
+  if (busy) return;
+
+  restartAforJourney();
+});
+
+$("nextLevelButton").addEventListener("click", () => {
+  const won = $("nextLevelButton").dataset.won === "true";
+
+  if (won) {
+    level++;
+    saveProgress();
+  }
+
+  startLevel();
+});
+
+$("closeResultButton").addEventListener("click", () => {
+  $("resultOverlay").classList.add("hidden");
+});
+
+$("backButton").addEventListener("click", () => {
+  window.location.href = "welcome.html";
+});
+
+/* =========================================
+   INITIALISE
+========================================= */
+
+function initialiseGame() {
+  loadSave();
+  startLevel();
+
+  $("soundButton").textContent = "🔊";
+}
+
+initialiseGame();
+
+// Close Dr Afor's personal letter.
+const closeAforLetter = $("closeAforLetter");
+
+if (closeAforLetter) {
+  closeAforLetter.addEventListener("click", () => {
+    $("aforLetter").classList.add("hidden");
+  });
+}

@@ -1,0 +1,434 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101b31">
+  <title>The Doctor Within | Mediverse</title>
+  <link rel="stylesheet" href="welcome.css">
+</head>
+
+<body>
+  <main class="welcome-page">
+
+    <header class="topbar">
+      <a class="brand" href="welcome.html">
+        <span class="brand-icon">✚</span>
+        <span>MEDIVERSE</span>
+      </a>
+
+      <div class="top-right">
+        <div class="xp-pill">
+  ⭐ <span id="homeXP">0 XP</span>
+</div>
+        <button class="sound-button" id="soundButton" aria-label="Toggle sound">🔊</button>
+      </div>
+    </header>
+
+    <section class="hero">
+
+<div class="player-progress">
+  <div class="player-stat">
+    <span>LEVEL</span>
+    <strong id="homeLevel">1</strong>
+  </div>
+
+  <div class="player-stat">
+    <span>EXPERIENCE</span>
+    <strong id="homeTotalXP">0 XP</strong>
+  </div>
+
+  <div class="player-stat">
+    <span>COINS</span>
+    <strong id="homeCoins">0</strong>
+  </div>
+</div>
+
+      <div class="hero-copy">
+        <div class="welcome-tag">
+          <span class="pulse-dot"></span>
+          A NEW JOURNEY BEGINS
+        </div>
+
+        <h1>
+          THE DOCTOR
+          <span>WITHIN.</span>
+        </h1>
+
+        <p class="hero-subtitle">
+          Every great doctor starts with a dream.
+        </p>
+
+        <p class="hero-description">
+          Welcome to the Mediverse, a world of discovery,
+          courage and compassion. Solve medical challenges,
+          help patients and discover the doctor within you.
+        </p>
+
+        <a href="match.html" class="begin-button">
+          <span class="play-icon">▶</span>
+          <span>
+            <strong>BEGIN ADVENTURE</strong>
+            <small>YOUR MEDIVERSE JOURNEY STARTS HERE</small>
+          </span>
+          <span class="button-arrow">→</span>
+        </a>
+
+        <div class="hero-footnote">
+          <span>♡</span>
+          Believe in yourself. One mission at a time.
+        </div>
+      </div>
+
+      <div class="hero-art">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+
+        <div class="floating-icon icon-one">🩺</div>
+        <div class="floating-icon icon-two">💊</div>
+        <div class="floating-icon icon-three">❤️</div>
+        <div class="floating-icon icon-four">🧬</div>
+
+        <div class="character-glow"></div>
+
+        
+<div class="doctor-card future-doctor-card">
+  <div class="doctor-sparkle sparkle-one">✦</div>
+  <div class="doctor-sparkle sparkle-two">✧</div>
+
+  <div class="future-doctor-icon">🩺</div>
+
+  <div class="doctor-name">
+    <span>FUTURE MEDICAL PROFESSIONAL</span>
+    <strong>DOCTOR IN<br>THE MAKING!</strong>
+    <small>One dream. One mission. Endless possibilities.</small>
+  </div>
+
+  <div class="doctor-stamp">⭐ FUTURE HERO ⭐</div>
+</div>
+
+<div class="character-caption">
+  <span class="caption-dot"></span>
+  YOUR JOURNEY TO GREATNESS STARTS HERE
+</div>
+
+        </div>
+
+        <div class="character-caption">
+          <span class="caption-dot"></span>
+          DR. HOPE IS WAITING FOR YOU
+        </div>
+      </div>
+
+    </section>
+
+    <section class="mission-section">
+
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">YOUR FIRST CHALLENGE</span>
+          <h2>Today's Medical Mission</h2>
+        </div>
+        <span class="mission-icon">🏥</span>
+      </div>
+
+      <div class="mission-card">
+        <div class="mission-symbol">❤️</div>
+
+        <div class="mission-content">
+          <h3>Help Happy Hospital!</h3>
+          <p>
+            Match medical supplies and collect hearts
+            to help patients feel better.
+          </p>
+
+          <div class="mission-bottom">
+            <span id="homeMissionStatus">Mission awaits</span>
+            <span id="homeMissionPercent">0% complete</span>
+          </div>
+
+          <div class="progress-track">
+            <div class="progress-fill" id="homeMissionProgress"></div>
+          </div>
+        </div>
+
+        <div class="mission-status">NEW</div>
+      </div>
+
+    </section>
+
+    <section class="features">
+      <div class="feature">
+        <span>🧠</span>
+        <div>
+          <strong>Train Your Mind</strong>
+          <small>Think, match and solve.</small>
+        </div>
+      </div>
+
+      <div class="feature">
+        <span>💗</span>
+        <div>
+          <strong>Help Patients</strong>
+          <small>Every heart matters.</small>
+        </div>
+      </div>
+
+      <div class="feature">
+        <span>🏆</span>
+        <div>
+          <strong>Become A Champion</strong>
+          <small>Unlock new achievements.</small>
+        </div>
+      </div>
+    </section>
+
+
+<section class="welcome-menu">
+  <button class="menu-button" id="dailyRewardButton">
+    🎁 <span>Daily Reward</span>
+  </button>
+
+  <button class="menu-button" id="achievementsButton">
+    🏆 <span>Achievements</span>
+  </button>
+
+  <button class="menu-button" id="settingsButton">
+    ⚙️ <span>Settings</span>
+  </button>
+</section>
+
+<div class="popup-overlay hidden" id="welcomePopup">
+  <div class="popup-card">
+    <button class="popup-close" id="popupClose">×</button>
+    <div class="popup-icon" id="popupIcon">🎁</div>
+    <h2 id="popupTitle">Daily Reward</h2>
+    <p id="popupMessage">Your daily gift is waiting!</p>
+    <div class="reward-amount" id="popupReward">+100 Coins</div>
+    <button class="popup-action" id="popupAction">COLLECT REWARD</button>
+  </div>
+</div>
+
+
+    <footer>
+      <span>THE DOCTOR WITHIN</span>
+      <span>MADE WITH ♡ FOR A FUTURE DOCTOR</span>
+    </footer>
+
+  </main>
+
+  
+<script>
+const SAVE_KEY = "doctorWithinMedicalMatch";
+const soundButton = document.getElementById("soundButton");
+
+let soundEnabled =
+  localStorage.getItem("doctorWithinSound") !== "false";
+
+soundButton.textContent = soundEnabled ? "🔊" : "🔇";
+
+soundButton.addEventListener("click", () => {
+  soundEnabled = !soundEnabled;
+
+  localStorage.setItem(
+    "doctorWithinSound",
+    String(soundEnabled)
+  );
+
+  soundButton.textContent = soundEnabled ? "🔊" : "🔇";
+});
+
+const popup = document.getElementById("welcomePopup");
+const popupIcon = document.getElementById("popupIcon");
+const popupTitle = document.getElementById("popupTitle");
+const popupMessage = document.getElementById("popupMessage");
+const popupReward = document.getElementById("popupReward");
+const popupAction = document.getElementById("popupAction");
+
+// LOAD PLAYER PROGRESS
+function getSave() {
+  try {
+    return JSON.parse(localStorage.getItem(SAVE_KEY)) || {
+      coins: 0,
+      xp: 0,
+      level: 1
+    };
+  } catch {
+    return {
+      coins: 0,
+      xp: 0,
+      level: 1
+    };
+  }
+}
+
+// DISPLAY PLAYER PROGRESS
+function updateHomeProgress() {
+  const save = getSave();
+
+  const level = Number(save.level) || 1;
+  const xp = Number(save.xp) || 0;
+  const coins = Number(save.coins) || 0;
+
+  const homeXP = document.getElementById("homeXP");
+  const homeLevel = document.getElementById("homeLevel");
+  const homeTotalXP = document.getElementById("homeTotalXP");
+  const homeCoins = document.getElementById("homeCoins");
+
+  if (homeXP) homeXP.textContent = `${xp} XP`;
+  if (homeLevel) homeLevel.textContent = level;
+  if (homeTotalXP) homeTotalXP.textContent = `${xp} XP`;
+  if (homeCoins) homeCoins.textContent = coins.toLocaleString();
+  const missionCollected = Number(save.heartsCollected) || 0;
+  const missionTarget = Number(save.targetHearts) || 20;
+
+  const missionPercent = Math.min(
+    100,
+    Math.round((missionCollected / missionTarget) * 100)
+  );
+
+  const missionBar = document.getElementById("homeMissionProgress");
+  const missionText = document.getElementById("homeMissionPercent");
+  const missionStatus = document.getElementById("homeMissionStatus");
+
+  if (missionBar) {
+    missionBar.style.width = `${missionPercent}%`;
+  }
+
+  if (missionText) {
+    missionText.textContent = `${missionPercent}% complete`;
+  }
+
+  if (missionStatus) {
+    missionStatus.textContent =
+      missionPercent >= 100 ? "Mission completed!" : "In progress";
+  }
+}
+
+// SAVE PLAYER PROGRESS
+function saveGame(data) {
+  localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  updateHomeProgress();
+}
+
+// INITIAL PROGRESS DISPLAY
+updateHomeProgress();
+
+// POPUP SYSTEM
+function openPopup(icon, title, message, reward, action, callback) {
+  popupIcon.textContent = icon;
+  popupTitle.textContent = title;
+  popupMessage.textContent = message;
+  popupReward.textContent = reward;
+  popupAction.textContent = action;
+
+  popup.classList.remove("hidden");
+  popupAction.onclick = callback;
+}
+
+function closePopup() {
+  popup.classList.add("hidden");
+}
+
+document.getElementById("popupClose")
+  .addEventListener("click", closePopup);
+
+popup.addEventListener("click", event => {
+  if (event.target === popup) closePopup();
+});
+
+// DAILY REWARD
+document.getElementById("dailyRewardButton")
+  .addEventListener("click", () => {
+
+    const today = new Date().toDateString();
+    const lastClaim = localStorage.getItem(
+      "doctorWithinLastReward"
+    );
+
+    if (lastClaim === today) {
+      openPopup(
+        "🎁",
+        "Already Collected!",
+        "You've collected today's gift. Come back tomorrow for another reward!",
+        "SEE YOU TOMORROW",
+        "GOT IT",
+        closePopup
+      );
+
+      return;
+    }
+
+    openPopup(
+      "🎁",
+      "A Gift From Dr. Hope!",
+      "You've worked hard. Here's a little something to help your journey.",
+      "+100 COINS",
+      "COLLECT REWARD",
+      () => {
+        const latestSave = getSave();
+
+        latestSave.coins =
+          (Number(latestSave.coins) || 0) + 100;
+
+        saveGame(latestSave);
+
+        localStorage.setItem(
+          "doctorWithinLastReward",
+          today
+        );
+
+        popupIcon.textContent = "🎉";
+        popupTitle.textContent = "Reward Collected!";
+        popupMessage.textContent =
+          "Dr. Hope is proud of you. Keep believing in yourself!";
+        popupReward.textContent = "+100 COINS";
+        popupAction.textContent = "AWESOME!";
+        popupAction.onclick = closePopup;
+      }
+    );
+  });
+
+// ACHIEVEMENTS
+document.getElementById("achievementsButton")
+  .addEventListener("click", () => {
+    const save = getSave();
+
+    openPopup(
+      "🏆",
+      "Your Achievements",
+      `You've reached level ${save.level || 1} and earned ${save.xp || 0} XP. Every mission is progress!`,
+      `${Number(save.coins) || 0} COINS`,
+      "KEEP GOING",
+      closePopup
+    );
+  });
+
+// SETTINGS
+document.getElementById("settingsButton")
+  .addEventListener("click", () => {
+
+    openPopup(
+      "⚙️",
+      "Game Settings",
+      `Sound is currently ${soundEnabled ? "ON" : "OFF"}.`,
+      "SOUND CONTROL",
+      soundEnabled ? "TURN SOUND OFF" : "TURN SOUND ON",
+      () => {
+        soundEnabled = !soundEnabled;
+
+        localStorage.setItem(
+          "doctorWithinSound",
+          String(soundEnabled)
+        );
+
+        soundButton.textContent =
+          soundEnabled ? "🔊" : "🔇";
+
+        closePopup();
+      }
+    );
+  });
+</script>
+

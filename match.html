@@ -1,0 +1,238 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101d35">
+  <title>Medical Match | The Doctor Within</title>
+  <link rel="stylesheet" href="match.css">
+</head>
+<body>
+
+  <main class="game-shell">
+
+    <!-- DR AFOR'S LEVEL INTRODUCTION -->
+<section class="afor-intro" id="aforIntro">
+  <div class="intro-content">
+    <div class="intro-emblem">🩺</div>
+
+    <p class="intro-label">A NEW JOURNEY BEGINS</p>
+
+    <h1>THE DOCTOR<br>WITHIN</h1>
+
+    <div class="intro-divider"></div>
+
+    <h2>Welcome, Dr Afor ❤️</h2>
+
+    <p class="intro-message">
+      The world needs great doctors.
+      Every challenge makes you stronger.
+      Every dream deserves a chance.
+    </p>
+
+    <div class="intro-mission">
+      <span>YOUR MISSION</span>
+      <strong>HELP HAPPY HOSPITAL!</strong>
+    </div>
+
+    <button
+      class="intro-start-button"
+      onclick="document.getElementById('aforIntro').classList.add('afor-intro-hidden')"
+    >
+      BEGIN MY JOURNEY →
+    </button>
+
+    <p class="intro-footer">BELIEVE IN YOURSELF, FUTURE DOCTOR.</p>
+  </div>
+</section>
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+      <button class="icon-button" id="backButton" aria-label="Back to arcade">
+        ←
+      </button>
+
+      <div class="brand">
+  <span class="brand-icon">🩺</span>
+  <div>
+    <h1>DR AFOR'S MEDICAL MATCH</h1>
+    <p>FUTURE DOCTOR • LEVEL UP YOUR DREAM</p>
+  </div>
+</div>
+
+      <div class="coin-display">
+        🪙 <span id="coinCount">0</span>
+      </div>
+    </header>
+    <!-- DR AFOR'S PERSONAL WELCOME -->
+<section class="afor-welcome">
+  <div class="welcome-icon">👩🏾‍⚕️</div>
+
+  <div class="welcome-text">
+    <span>WELCOME, FUTURE DOCTOR</span>
+    <h2>Dr Afor ❤️</h2>
+    <p>Every great doctor starts with a dream. Today, take another step towards yours.</p>
+  </div>
+
+  <div class="welcome-badge">🩺</div>
+</section>
+
+    <!-- LEVEL INTRO -->
+    <section class="level-heading">
+      <div>
+        <p class="eyebrow">MEDIVERSE · HAPPY HOSPITAL</p>
+        <h2>Hearts of Hope</h2>
+        <p class="level-subtitle">A little matching, a lot of healing!</p>
+      </div>
+      <div class="level-number">
+        <span>LEVEL</span>
+        <strong id="levelNumber">1</strong>
+      </div>
+    </section>
+
+    <!-- MISSION -->
+    <section class="mission-card">
+      <div class="mission-icon">❤️</div>
+      <div class="mission-copy">
+        <span>YOUR MISSION</span>
+        <strong>Collect <span id="targetCount">20</span> hearts</strong>
+        <div class="mission-progress">
+          <div class="mission-progress-fill" id="missionProgress"></div>
+        </div>
+      </div>
+      <div class="mission-score">
+        <strong id="collectedCount">0</strong>
+        <span>/ 20</span>
+      </div>
+    </section>
+
+    <!-- GAME STATS -->
+    <section class="stats-row">
+      <div class="stat-card">
+        <span class="stat-icon">🎯</span>
+        <span class="stat-label">SCORE</span>
+        <strong id="score">0</strong>
+      </div>
+
+      <div class="stat-card moves-card">
+        <span class="stat-icon">👆</span>
+        <span class="stat-label">MOVES LEFT</span>
+        <strong id="movesLeft">20</strong>
+      </div>
+
+      <div class="stat-card">
+        <span class="stat-icon">🔥</span>
+        <span class="stat-label">BEST COMBO</span>
+        <strong id="bestCombo">0</strong>
+      </div>
+    </section>
+
+    <!-- GAME BOARD -->
+    <section class="board-section">
+      <div class="board-heading">
+        <div>
+          <h3>Medical Match</h3>
+          <p>Swap two neighbours to match 3 or more!</p>
+        </div>
+        <button id="soundButton" class="sound-button" aria-label="Toggle sound">
+          🔊
+        </button>
+      </div>
+
+      <div class="board-frame">
+        <div
+          id="gameBoard"
+          class="game-board"
+          role="grid"
+          aria-label="Medical Match puzzle board"
+        ></div>
+      </div>
+
+      <p class="board-hint" id="gameMessage">
+        Find three matching pieces and tap to swap!
+      </p>
+    </section>
+
+    <!-- POWER-UP GUIDE -->
+    <section class="powerup-guide">
+      <div class="powerup-title">
+        <span>✨</span>
+        <strong>Match more to make magic!</strong>
+      </div>
+      <div class="powerup-items">
+        <div><span>3</span><small>Match 3</small></div>
+        <div><span>4</span><small>Match 4</small></div>
+        <div><span>5+</span><small>Match 5+</small></div>
+      </div>
+      <p>Longer matches will create special power-ups in the next stage.</p>
+    </section>
+
+    <!-- BOTTOM ACTIONS -->
+    <footer class="game-footer">
+      <button id="restartButton" class="secondary-button">
+        ↻ Restart level
+      </button>
+      <div class="footer-note">Made with ❤️ for a future doctor</div>
+    </footer>
+
+<!-- DR AFOR'S SECRET MESSAGE -->
+<div class="afor-letter-overlay hidden" id="aforLetter">
+  <div class="afor-letter">
+    <div class="letter-heart">💌</div>
+    <p class="letter-label">A SPECIAL MESSAGE FOR YOU</p>
+    <h2>Dear Dr Afor ❤️</h2>
+
+    <p>
+      I hope you never forget that someone believes in you.
+      Even on the days you doubt yourself and even on the days you feel lost, I see the doctor
+      you're working so hard to become.
+    </p>
+
+    <p>
+      Keep going. Your dream is worth fighting for.
+      I believe in you, always. And don't forget, it's one day at a time.
+    </p>
+
+    <div class="letter-signature">
+      With love,<br>
+      <strong>Benjamin ❤️</strong>
+    </div>
+
+    <button id="closeAforLetter">I'LL KEEP GOING ❤️</button>
+  </div>
+</div>
+
+  </main>
+
+  <!-- LEVEL RESULT -->
+  <div class="overlay hidden" id="resultOverlay">
+    <section class="result-card">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <p class="eyebrow" id="resultEyebrow">LEVEL COMPLETE</p>
+      <h2 id="resultTitle">Amazing work!</h2>
+      <p id="resultMessage">You collected every heart!</p>
+
+      <div class="result-rewards">
+        <div><span>⭐</span><strong id="resultScore">0</strong><small>Score</small></div>
+        <div><span>🪙</span><strong id="resultCoins">0</strong><small>Coins</small></div>
+        <div><span>✨</span><strong id="resultXP">0</strong><small>XP</small></div>
+      </div>
+
+      <button id="nextLevelButton" class="primary-button">
+  Play again →
+</button>
+
+<button id="closeResultButton" class="text-button">
+  Back to board
+</button>
+
+<button id="restartJourneyButton" class="text-button">
+  ↻ Restart Journey from Level 1
+</button>
+    </section>
+  </div>
+
+  <script src="match.js"></script>
+</body>
+</html>
