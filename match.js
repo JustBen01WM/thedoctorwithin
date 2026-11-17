@@ -1945,3 +1945,92 @@ if (closeAforLetter) {
     $("aforLetter").classList.add("hidden");
   });
 }
+
+/* =========================================
+   INSTALLABLE APP — SERVICE WORKER
+========================================= */
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("./sw.js")
+      .catch((error) => {
+        console.error("Service worker registration failed:", error);
+      });
+  });
+}
+
+/* =========================================
+   DR AFOR — APP INSTALLATION
+========================================= */
+
+let deferredInstallPrompt = null;
+
+const installAppButton = $("installAppButton");
+
+// Detect when the browser offers installation.
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+});
+
+// Handle installation button clicks.
+if (installAppButton) {
+  installAppButton.addEventListener("click", async () => {
+
+    // Check whether the game is already installed.
+    const isInstalled =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+
+    if (isInstalled) {
+      alert("Medical Match is already installed on this device! ❤️");
+      return;
+    }
+
+    // iPhone and iPad instructions.
+    const isAppleMobile =
+      /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (isAppleMobile) {
+      alert(
+        "To install Dr Afor's Medical Match:\n\n" +
+        "1. Open this game in Safari.\n" +
+        "2. Tap the Share button.\n" +
+        "3. Select 'Add to Home Screen'.\n" +
+        "4. Tap 'Add'.\n\n" +
+        "The game will appear alongside your other apps! ❤️"
+      );
+      return;
+    }
+
+    // Android and supported desktop browsers.
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+
+      const choice = await deferredInstallPrompt.userChoice;
+
+      if (choice.outcome === "accepted") {
+        installAppButton.textContent = "❤️ GAME INSTALLED";
+      }
+
+      deferredInstallPrompt = null;
+      return;
+    }
+
+    // Fallback when the browser has not offered installation yet.
+    alert(
+      "To install Medical Match:\n\n" +
+      "Open your browser menu (⋮) and select 'Install app' " +
+      "or 'Add to Home Screen'."
+    );
+  });
+}
+
+// Update the button if installation succeeds.
+window.addEventListener("appinstalled", () => {
+  if (installAppButton) {
+    installAppButton.textContent = "❤️ GAME INSTALLED";
+  }
+});

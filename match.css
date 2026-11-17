@@ -527,9 +527,11 @@ button {
     padding: 15px 9px;
   }
 
-  .board-section {
-    padding: 11px;
-  }
+.board-section {
+  padding: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
 
   .game-board {
     gap: 3px;
@@ -1640,4 +1642,43 @@ body.boss-level #gameBoard {
 
 .coin-tool strong {
   font-size: 14px;
+}
+
+/* Larger medical tiles on mobile */
+@media (max-width: 600px) {
+  .game-board {
+    gap: 4px;
+  }
+
+  .tile {
+    font-size: clamp(21px, 6vw, 34px);
+    border-radius: 10px;
+  }
+
+  .board-section {
+    padding: 4px;
+  }
+}
+
+/* INSTALL GAME BUTTON */
+.install-button {
+  display: block;
+  width: min(280px, 90%);
+  margin: 14px auto 0;
+  padding: 13px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #18bfa0, #087f91);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 190, 160, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.install-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 22px rgba(0, 190, 160, 0.3);
 }
