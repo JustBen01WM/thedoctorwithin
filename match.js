@@ -514,22 +514,34 @@ function generateBoard() {
 /* =========================================
    RENDER BOARD
 ========================================= */
-
 function renderBoard() {
   const boardElement = $("gameBoard");
-  boardElement.innerHTML = "";
 
-  for (let row = 0; row < SIZE; row++) {
-    for (let col = 0; col < SIZE; col++) {
-      const tileData = board[row][col];
-      const index = indexOf(row, col);
+  // Create the 64 tile elements only once.
+  if (boardElement.children.length !== SIZE * SIZE) {
+    boardElement.innerHTML = "";
 
+    for (let i = 0; i < SIZE * SIZE; i++) {
       const tile = document.createElement("button");
       tile.type = "button";
       tile.className = "tile";
-      tile.dataset.index = index;
-      tile.dataset.row = row;
-      tile.dataset.col = col;
+      tile.dataset.index = i;
+      tile.dataset.row = Math.floor(i / SIZE);
+      tile.dataset.col = i % SIZE;
+      boardElement.appendChild(tile);
+    }
+  }
+
+  // Update existing tiles without rebuilding the board.
+  for (let row = 0; row < SIZE; row++) {
+    for (let col = 0; col < SIZE; col++) {
+      const index = indexOf(row, col);
+      const tile = boardElement.children[index];
+      const tileData = board[row][col];
+
+      tile.className = "tile";
+      tile.textContent = "";
+      tile.removeAttribute("aria-label");
 
       if (tileData) {
         tile.textContent = tileData.special
@@ -544,7 +556,10 @@ function renderBoard() {
         );
 
         if (tileData.special) {
-          tile.classList.add("special-tile", `special-${tileData.special}`);
+          tile.classList.add(
+            "special-tile",
+            `special-${tileData.special}`
+          );
         }
       }
 
@@ -557,7 +572,6 @@ function renderBoard() {
       }
 
       tile.disabled = busy || levelFinished;
-      boardElement.appendChild(tile);
     }
   }
 }
@@ -1967,6 +1981,17 @@ if ("serviceWorker" in navigator) {
 let deferredInstallPrompt = null;
 
 const installAppButton = $("installAppButton");
+function updateInstallButtonVisibility() {
+  if (!installAppButton) return;
+
+  const isInstalled =
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true;
+
+  installAppButton.style.display = isInstalled ? "none" : "block";
+}
+
+updateInstallButtonVisibility();
 
 // Detect when the browser offers installation.
 window.addEventListener("beforeinstallprompt", (event) => {
@@ -2031,6 +2056,6 @@ if (installAppButton) {
 // Update the button if installation succeeds.
 window.addEventListener("appinstalled", () => {
   if (installAppButton) {
-    installAppButton.textContent = "❤️ GAME INSTALLED";
+    installAppButton.style.display = "none";
   }
 });
