@@ -97,6 +97,23 @@ button {
   font-size: 23px;
 }
 
+.audio-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.audio-controls .sound-button {
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.audio-controls .sound-button:hover {
+  transform: scale(1.08);
+  background: #ffffff28;
+}
+
 .coin-display {
   gap: 6px;
   padding: 9px 13px;
@@ -1410,4 +1427,217 @@ button {
   font-size: 13px;
   font-weight: 800;
   cursor: pointer;
+}
+
+
+/* =====================================
+   DR AFOR'S MEDICAL WORLD MAP
+===================================== */
+
+.world-map-card {
+  width: min(440px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.medical-destinations {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.destination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 1.1rem;
+  font-weight: 700;
+  transition: 0.25s ease;
+}
+
+.destination span {
+  flex: 1;
+}
+
+.destination.active {
+  border-color: #42d9a0;
+  background: rgba(66, 217, 160, 0.16);
+  box-shadow: 0 0 18px rgba(66, 217, 160, 0.16);
+}
+
+.destination.locked {
+  opacity: 0.45;
+  filter: grayscale(0.7);
+}
+
+.destination.unlocked {
+  border-color: rgba(255, 210, 90, 0.65);
+  background: rgba(255, 210, 90, 0.09);
+}
+
+.destination.completed {
+  border-color: rgba(66, 217, 160, 0.5);
+  background: rgba(66, 217, 160, 0.1);
+}
+
+
+/* =====================================
+   MEDICAL BOSS LEVEL EFFECT
+===================================== */
+
+body.boss-level .gameMessage,
+body.boss-level #gameMessage {
+  color: #ffb84d;
+  font-weight: 900;
+  text-shadow: 0 0 12px rgba(255, 160, 40, 0.55);
+}
+
+body.boss-level .game-board,
+body.boss-level #gameBoard {
+  border-color: rgba(255, 130, 50, 0.8);
+  box-shadow: 0 0 25px rgba(255, 100, 30, 0.2);
+}
+
+
+/* =====================================
+   DR AFOR'S ACHIEVEMENT COLLECTION
+===================================== */
+
+.achievement-card {
+  width: min(440px, 92vw);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.achievement-list {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+  text-align: left;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.achievement-item.unlocked {
+  border-color: #42d9a0;
+  background: rgba(66, 217, 160, 0.12);
+}
+
+.achievement-item.locked {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.achievement-icon {
+  font-size: 2rem;
+  min-width: 42px;
+  text-align: center;
+}
+
+.achievement-info {
+  flex: 1;
+}
+
+.achievement-info strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.achievement-info small {
+  display: block;
+  margin-top: 4px;
+  opacity: 0.7;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+#quickAchievementButton {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#achievementCount {
+  font-size: 11px;
+}
+
+
+.clean-header {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.header-brand .brand {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-brand .brand h1 {
+  font-size: 15px;
+}
+
+.header-brand .brand p {
+  font-size: 10px;
+}
+
+.header-tools {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.header-tool {
+  min-width: 0;
+  min-height: 65px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.13);
+  background: rgba(255,255,255,.07);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font: inherit;
+}
+
+.header-tool span {
+  font-size: 20px;
+}
+
+.header-tool small {
+  font-size: 10px;
+}
+
+.coin-tool strong {
+  font-size: 14px;
 }

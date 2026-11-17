@@ -41,8 +41,15 @@ let level = 1;
 
 let coins = 0;
 let totalXP = 0;
+let achievements = [];
 let soundEnabled = true;
+let musicEnabled = true;
 let audioContext = null;
+
+let musicTimer = null;
+let musicStep = 0;
+let musicMode = "normal";
+let mapOpenedFromResult = false;
 
 /* =========================================
    SMALL HELPERS
@@ -87,6 +94,9 @@ function loadSave() {
       coins = Math.max(0, Number(saved.coins) || 0);
       totalXP = Math.max(0, Number(saved.xp) || 0);
       level = Math.max(1, Number(saved.level) || 1);
+      achievements = Array.isArray(saved.achievements)
+  ? saved.achievements
+  : [];
     }
   } catch (error) {
     console.warn("Could not load Medical Match progress.", error);
@@ -100,6 +110,80 @@ function updateCoinDisplay() {
   $("coinCount").textContent = coins.toLocaleString();
 }
 
+const achievementDetails = {
+  heartHealer: {
+    name: "Heart Healer",
+    emoji: "❤️",
+    description: "Complete your first level!"
+  },
+  comboQueen: {
+    name: "Combo Queen",
+    emoji: "🔥",
+    description: "Reach a 5x combo!"
+  },
+  risingDoctor: {
+    name: "Rising Doctor",
+    emoji: "🩺",
+    description: "Reach Level 5!"
+  },
+  bossSlayer: {
+    name: "Boss Slayer",
+    emoji: "🏆",
+    description: "Defeat your first Boss Level!"
+  },
+  medicalLegend: {
+    name: "Medical Legend",
+    emoji: "💎",
+    description: "Complete 10 levels!"
+  }
+};
+
+function unlockAchievement(id) {
+  if (achievements.includes(id)) return;
+
+  const achievement = achievementDetails[id];
+  if (!achievement) return;
+
+  achievements.push(id);
+  saveProgress();
+
+  $("gameMessage").textContent =
+    `${achievement.emoji} ACHIEVEMENT UNLOCKED: ${achievement.name}!`;
+
+  playArcadeSound("achievement");
+
+function renderAchievements() {
+  const list = $("achievementList");
+  $("achievementCount").textContent =
+  `${achievements.length}/5`;
+
+  list.innerHTML = Object.entries(achievementDetails)
+    .map(([id, achievement]) => {
+      const unlocked = achievements.includes(id);
+
+      return `
+        <div class="achievement-item ${unlocked ? "unlocked" : "locked"}">
+          <div class="achievement-icon">${achievement.emoji}</div>
+          <div class="achievement-info">
+            <strong>${achievement.name}</strong>
+            <small>${unlocked ? "✓ Unlocked!" : achievement.description}</small>
+          </div>
+          <span>${unlocked ? "🏅" : "🔒"}</span>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+$("quickAchievementButton").addEventListener("click", () => {
+  renderAchievements();
+  $("achievementOverlay").classList.remove("hidden");
+});
+
+$("closeAchievementButton").addEventListener("click", () => {
+  $("achievementOverlay").classList.add("hidden");
+});
+}
 
 function saveProgress() {
   try {
@@ -108,12 +192,15 @@ function saveProgress() {
       xp: totalXP,
       level,
       heartsCollected,
-      targetHearts
+      targetHearts,
+      completedDestinations: Math.min(level - 1, 6),
+      achievements
     }));
   } catch (error) {
     console.warn("Could not save Medical Match progress.", error);
   }
 }
+
 /* =========================================
    DR AFOR — RESTART JOURNEY
 ========================================= */
@@ -219,12 +306,40 @@ function playArcadeSound(type) {
       [1350, 0.16]
     ],
 
-    victory: [
-      [523, 0.12],
-      [659, 0.12],
-      [784, 0.12],
-      [1047, 0.25]
-    ]
+   victory: [
+  [523, 0.12],
+  [659, 0.12],
+  [784, 0.12],
+  [1047, 0.25]
+],
+
+heart: [
+  [660, 0.08],
+  [880, 0.12],
+  [1100, 0.16]
+],
+
+bossVictory: [
+  [392, 0.12],
+  [523, 0.12],
+  [659, 0.12],
+  [784, 0.12],
+  [1047, 0.18],
+  [1318, 0.3]
+],
+
+failure: [
+  [440, 0.12],
+  [349, 0.16],
+  [262, 0.25]
+],
+
+achievement: [
+  [784, 0.09],
+  [988, 0.09],
+  [1175, 0.12],
+  [1568, 0.25]
+]
   };
 
   const pattern = soundPatterns[type];
@@ -237,11 +352,124 @@ function playArcadeSound(type) {
   });
 }
 
+/* =========================================
+   DR SARAH — BACKGROUND MUSIC ENGINE
+========================================= */
+
+function playMusicNote(frequency, duration = 0.3, volume = 0.025) {
+  if (!musicEnabled) return;
+
+  try {
+    const AudioContextClass =
+      window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) return;
+
+    audioContext ||= new AudioContextClass();
+
+    if (audioContext.state === "suspended") {
+      audioContext.resume();
+    }
+
+    const oscillator = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    const now = audioContext.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, now);
+
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(volume, now + 0.04);
+    gain.gain.exponentialRampToValueAtTime(
+      0.001,
+      now + duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(audioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+  } catch (error) {
+    // Background music is optional.
+  }
+}
+
+function stopBackgroundMusic() {
+  if (musicTimer) {
+    clearInterval(musicTimer);
+    musicTimer = null;
+  }
+}
+
+function startBackgroundMusic(mode = "normal") {
+  stopBackgroundMusic();
+
+  if (!musicEnabled) return;
+
+  musicMode = mode;
+  musicStep = 0;
+
+  const normalMelody = [
+    523, 659, 784, 659,
+    587, 698, 880, 698,
+    523, 659, 784, 988,
+    880, 784, 659, 587
+  ];
+
+  const bossMelody = [
+    392, 392, 523, 392,
+    349, 349, 466, 349,
+    392, 523, 659, 523,
+    466, 392, 349, 392
+  ];
+
+  const melody = mode === "boss"
+    ? bossMelody
+    : normalMelody;
+
+  musicTimer = setInterval(() => {
+    if (!musicEnabled) {
+      stopBackgroundMusic();
+      return;
+    }
+
+    const note = melody[musicStep % melody.length];
+
+    playMusicNote(
+      note,
+      mode === "boss" ? 0.24 : 0.32,
+      mode === "boss" ? 0.035 : 0.022
+    );
+
+    if (musicStep % 4 === 0) {
+      playMusicNote(
+        mode === "boss" ? 98 : 131,
+        0.4,
+        0.018
+      );
+    }
+
+    musicStep++;
+  }, mode === "boss" ? 300 : 420);
+}
+
 $("soundButton").addEventListener("click", () => {
   soundEnabled = !soundEnabled;
   $("soundButton").textContent = soundEnabled ? "🔊" : "🔇";
 
   if (soundEnabled) playSound(650);
+});
+$("musicButton").addEventListener("click", () => {
+  musicEnabled = !musicEnabled;
+
+  $("musicButton").textContent = musicEnabled ? "🎵" : "🔇";
+
+  if (musicEnabled) {
+    startBackgroundMusic(musicMode);
+  } else {
+    stopBackgroundMusic();
+  }
 });
 
 /* =========================================
@@ -894,7 +1122,7 @@ function activateSpecialCombo(
     $("gameMessage").textContent =
       "🌈🌈 MEGA RAINBOW! TOTAL BOARD CLEAR!";
 
-    playSound(1100, 0.35);
+    playArcadeSound("rainbow");
 
   } else if (isRainbowBomb) {
     // 🌈 + 💥 = turn every matching tile into a bomb blast.
@@ -913,7 +1141,7 @@ function activateSpecialCombo(
     $("gameMessage").textContent =
       "🌈💥 RAINBOW BOMB STORM!";
 
-    playSound(1050, 0.3);
+    playArcadeSound("bomb");
 
   } else if (isRainbowLightning) {
     // 🌈 + ⚡ = cross-shaped lightning across matching tiles.
@@ -933,7 +1161,7 @@ function activateSpecialCombo(
     $("gameMessage").textContent =
       "🌈⚡ RAINBOW LIGHTNING!";
 
-    playSound(1000, 0.3);
+    playArcadeSound("lightning");
 
   } else if (isDoubleBomb) {
     // 💥 + 💥 = two overlapping large explosions.
@@ -952,7 +1180,7 @@ function activateSpecialCombo(
     $("gameMessage").textContent =
       "💥💥 MEGA EXPLOSION!";
 
-    playSound(900, 0.35);
+    playArcadeSound("bomb");
 
   } else if (isDoubleLightning) {
     // ⚡ + ⚡ = cross-shaped board-wide lightning.
@@ -965,7 +1193,7 @@ function activateSpecialCombo(
     $("gameMessage").textContent =
       "⚡⚡ DOUBLE LIGHTNING STRIKE!";
 
-    playSound(950, 0.3);
+    playArcadeSound("lightning");
 
   } else if (isBombLightning) {
     // 💥 + ⚡ = three rows and three columns.
@@ -985,7 +1213,7 @@ function activateSpecialCombo(
     $("gameMessage").textContent =
       "💥⚡ MEGA HEALING BLAST!";
 
-    playSound(950, 0.3);
+    playArcadeSound("bomb");
   }
 
   // Activate any additional special tiles caught in the combo.
@@ -1290,9 +1518,17 @@ async function clearCascades(runId, preferredPosition = null) {
       }
     }
 
-    heartsCollected += heartCredits.size;
+    heartsCollected += heartCredits.size;   
+    if (heartCredits.size > 0) {
+  playArcadeSound("heart");
+}
 
     const points = toClear.size * 60 * cascade;
+    if (cascade > 1) {
+  playArcadeSound("combo");
+} else {
+  playArcadeSound("match");
+}
     score += points;
     showRewardBurst(points, heartCredits.size);
 
@@ -1468,8 +1704,15 @@ function finishLevel(won) {
   busy = false;
   selectedTile = null;
 
-  const earnedCoins = won ? 30 + level * 5 : 5;
-  const earnedXP = won ? 50 + level * 10 : 5;
+const isBossLevel = level % 5 === 0;
+
+const earnedCoins = won
+  ? 30 + level * 5 + (isBossLevel ? 50 : 0)
+  : 5;
+
+const earnedXP = won
+  ? 50 + level * 10 + (isBossLevel ? 100 : 0)
+  : 5;
 
   coins += earnedCoins;
   totalXP += earnedXP;
@@ -1477,11 +1720,38 @@ function finishLevel(won) {
   saveProgress();
   updateCoinDisplay();
 
-  $("resultEmoji").textContent = won ? "🎉" : "💪";
+if (won) {
+  unlockAchievement("heartHealer");
 
-  $("resultEyebrow").textContent = won
-    ? "LEVEL COMPLETE"
-    : "NICE TRY";
+  if (bestCombo >= 5) {
+    unlockAchievement("comboQueen");
+  }
+
+  if (level >= 5) {
+    unlockAchievement("risingDoctor");
+  }
+
+  if (level % 5 === 0) {
+    unlockAchievement("bossSlayer");
+  }
+
+  if (level >= 10) {
+    unlockAchievement("medicalLegend");
+  }
+}
+
+  $("resultEmoji").textContent = won ? "🎉" : "💪";
+  if (won && isBossLevel) {
+  playArcadeSound("bossVictory");
+} else if (won) {
+  playArcadeSound("victory");
+} else {
+  playArcadeSound("failure");
+}
+
+$("resultEyebrow").textContent = won
+  ? (isBossLevel ? "🏆 BOSS DEFEATED!" : "LEVEL COMPLETE")
+  : (isBossLevel ? "BOSS CHALLENGE FAILED" : "NICE TRY");
 
 $("resultTitle").textContent = won
   ? "Dr Afor, YOU DID IT! ❤️"
@@ -1494,9 +1764,9 @@ $("resultTitle").textContent = won
   $("resultScore").textContent = score;
   $("resultCoins").textContent = earnedCoins;
   $("resultXP").textContent = earnedXP;
-
-  $("nextLevelButton").textContent =
-    won ? "Next level →" : "Try again ↻";
+  
+$("nextLevelButton").textContent =
+    won ? "Continue to Next Level →" : "🔄 RETRY THIS LEVEL";
 
   $("nextLevelButton").dataset.won = String(won);
 
@@ -1533,13 +1803,30 @@ function startLevel() {
   busy = false;
   levelFinished = false;
 
-  moves = 20;
+  const isBossLevel = level % 5 === 0;
+  document.body.classList.toggle("boss-level", isBossLevel);
+  startBackgroundMusic(isBossLevel ? "boss" : "normal");
+  moves = isBossLevel ? 15 : 20;
   score = 0;
   heartsCollected = 0;
   bestCombo = 0;
   currentCombo = 0;
 
-  targetHearts = Math.min(20 + (level - 1) * 5, 50);
+ targetHearts = Math.min(20 + (level - 1) * 5, 50);
+
+const missionMessages = [
+  "❤️ Mission: Collect hearts to help your patients!",
+  "🩺 Mission: Match your way to a healthier hospital!",
+  "💊 Mission: Collect as many hearts as possible!",
+  "🌟 Mission: Show your medical skills, Dr Afor!"
+];
+
+$("gameMessage").textContent =
+  missionMessages[(level - 1) % missionMessages.length];
+  if (isBossLevel) {
+  $("gameMessage").textContent =
+    "🚨 BOSS LEVEL! Dr Sarah, your biggest medical challenge awaits!";
+}
 
   $("resultOverlay").classList.add("hidden");
 
@@ -1573,6 +1860,60 @@ $("nextLevelButton").addEventListener("click", () => {
   }
 
   startLevel();
+});
+
+function updateMedicalWorldMap() {
+  const destinations = [
+    "General Hospital",
+    "Cardiology Centre",
+    "Neurology Centre",
+    "Pharmacy Lab",
+    "Emergency Ward",
+    "Chief Doctor's Challenge"
+  ];
+
+  for (let i = 1; i <= 6; i++) {
+    const destination = $("destination" + i);
+
+    destination.classList.remove(
+      "active", "locked", "unlocked", "completed"
+    );
+
+    if (level > i) {
+      destination.classList.add("completed");
+      destination.querySelector("span").textContent =
+        destinations[i - 1] + " ✓";
+    } else if (level === i) {
+      destination.classList.add("active");
+      destination.querySelector("span").textContent =
+        destinations[i - 1] + " — CURRENT";
+    } else {
+      destination.classList.add("locked");
+      destination.querySelector("span").textContent =
+        destinations[i - 1] + " 🔒";
+    }
+  }
+}
+
+$("quickMapButton").addEventListener("click", () => {
+  updateMedicalWorldMap();
+  $("worldMapOverlay").classList.remove("hidden");
+  mapOpenedFromResult = false;
+});
+
+$("openWorldMapButton").addEventListener("click", () => {
+  updateMedicalWorldMap();
+  $("resultOverlay").classList.add("hidden");
+  $("worldMapOverlay").classList.remove("hidden");
+  mapOpenedFromResult = true;
+});
+
+$("closeWorldMapButton").addEventListener("click", () => {
+  $("worldMapOverlay").classList.add("hidden");
+
+  if (mapOpenedFromResult) {
+    $("resultOverlay").classList.remove("hidden");
+  }
 });
 
 $("closeResultButton").addEventListener("click", () => {

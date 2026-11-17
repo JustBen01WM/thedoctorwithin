@@ -47,24 +47,43 @@
   </div>
 </section>
 
-    <!-- TOP BAR -->
-    <header class="topbar">
-      <button class="icon-button" id="backButton" aria-label="Back to arcade">
-        ←
-      </button>
+ 
+<header class="topbar clean-header">
 
-      <div class="brand">
-  <span class="brand-icon">🩺</span>
-  <div>
-    <h1>DR AFOR'S MEDICAL MATCH</h1>
-    <p>FUTURE DOCTOR • LEVEL UP YOUR DREAM</p>
-  </div>
-</div>
+  <div class="header-brand">
+    <button class="icon-button" id="backButton">←</button>
 
-      <div class="coin-display">
-        🪙 <span id="coinCount">0</span>
+    <div class="brand">
+      <span class="brand-icon">🩺</span>
+      <div>
+        <h1>DR AFOR'S MEDICAL MATCH</h1>
+        <p>FUTURE DOCTOR • LEVEL UP YOUR DREAM</p>
       </div>
-    </header>
+    </div>
+  </div>
+
+  <div class="header-tools">
+    <button id="quickMapButton" class="header-tool">
+      <span>🗺️</span>
+      <small>MAP</small>
+    </button>
+
+    <button id="quickAchievementButton" class="header-tool">
+      <span>🏆</span>
+      <small>AWARDS</small>
+      <small id="achievementCount">0/5</small>
+    </button>
+
+    <div class="header-tool coin-tool">
+      <span>🪙</span>
+      <strong id="coinCount">0</strong>
+    </div>
+  </div>
+
+</header>
+
+
+
     <!-- DR AFOR'S PERSONAL WELCOME -->
 <section class="afor-welcome">
   <div class="welcome-icon">👩🏾‍⚕️</div>
@@ -135,9 +154,15 @@
           <h3>Medical Match</h3>
           <p>Swap two neighbours to match 3 or more!</p>
         </div>
-        <button id="soundButton" class="sound-button" aria-label="Toggle sound">
-          🔊
-        </button>
+       <div class="audio-controls">
+  <button id="soundButton" class="sound-button" aria-label="Toggle sound">
+    🔊
+  </button>
+
+  <button id="musicButton" class="sound-button" aria-label="Toggle music">
+    🎵
+  </button>
+</div>
       </div>
 
       <div class="board-frame">
@@ -205,6 +230,44 @@
 
   </main>
 
+
+<!-- DR AFOR'S MEDICAL WORLD MAP -->
+<div class="overlay hidden" id="worldMapOverlay">
+  <section class="result-card world-map-card">
+    <p class="eyebrow">DR AFOR'S JOURNEY</p>
+    <h2>🏥 Medical World Map</h2>
+    <p>Every level brings you closer to becoming an amazing doctor!</p>
+
+    <div class="medical-destinations">
+      <div class="destination active" id="destination1">🏥 <span>General Hospital</span></div>
+      <div class="destination locked" id="destination2">❤️ <span>Cardiology Centre</span> 🔒</div>
+      <div class="destination locked" id="destination3">🧠 <span>Neurology Centre</span> 🔒</div>
+      <div class="destination locked" id="destination4">💊 <span>Pharmacy Lab</span> 🔒</div>
+      <div class="destination locked" id="destination5">🚑 <span>Emergency Ward</span> 🔒</div>
+      <div class="destination locked" id="destination6">🏆 <span>Chief Doctor's Challenge</span> 🔒</div>
+    </div>
+
+    <button id="closeWorldMapButton" class="primary-button">
+      Back to my game
+    </button>
+  </section>
+</div>
+
+<!-- DR AFOR'S ACHIEVEMENT COLLECTION -->
+<div class="overlay hidden" id="achievementOverlay">
+  <section class="result-card achievement-card">
+    <p class="eyebrow">DR AFOR'S COLLECTION</p>
+    <h2>🏆 My Achievements</h2>
+    <p>Every achievement is another step towards your dream!</p>
+
+    <div id="achievementList" class="achievement-list"></div>
+
+    <button id="closeAchievementButton" class="primary-button">
+      Back to my game
+    </button>
+  </section>
+</div>
+
   <!-- LEVEL RESULT -->
   <div class="overlay hidden" id="resultOverlay">
     <section class="result-card">
@@ -226,7 +289,9 @@
 <button id="closeResultButton" class="text-button">
   Back to board
 </button>
-
+<button id="openWorldMapButton" class="text-button">
+  🗺️ Explore Medical World Map
+</button>
 <button id="restartJourneyButton" class="text-button">
   ↻ Restart Journey from Level 1
 </button>
