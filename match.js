@@ -353,7 +353,7 @@ achievement: [
 }
 
 /* =========================================
-   DR SARAH — BACKGROUND MUSIC ENGINE
+   DR AFOR — BACKGROUND MUSIC ENGINE
 ========================================= */
 
 function playMusicNote(frequency, duration = 0.3, volume = 0.025) {
@@ -1764,7 +1764,7 @@ $("resultTitle").textContent = won
   $("resultScore").textContent = score;
   $("resultCoins").textContent = earnedCoins;
   $("resultXP").textContent = earnedXP;
-  
+
 $("nextLevelButton").textContent =
     won ? "Continue to Next Level →" : "🔄 RETRY THIS LEVEL";
 
@@ -1825,7 +1825,7 @@ $("gameMessage").textContent =
   missionMessages[(level - 1) % missionMessages.length];
   if (isBossLevel) {
   $("gameMessage").textContent =
-    "🚨 BOSS LEVEL! Dr Sarah, your biggest medical challenge awaits!";
+    "🚨 BOSS LEVEL! Dr Afor, your biggest medical challenge awaits!";
 }
 
   $("resultOverlay").classList.add("hidden");
