@@ -2102,11 +2102,124 @@ $("backButton").addEventListener("click", () => {
   window.location.href = "welcome.html";
 });
 
+function setupProgressTransfer() {
+  const exportButton = $("exportProgressButton");
+  const importButton = $("importProgressButton");
+  const fileInput = $("importProgressFile");
+
+  if (!exportButton || !importButton || !fileInput) return;
+
+  // EXPORT PROGRESS
+  exportButton.addEventListener("click", () => {
+    saveProgress();
+
+    const savedData = localStorage.getItem(SAVE_KEY);
+
+    if (!savedData) {
+      alert("No saved progress found.");
+      return;
+    }
+
+    const blob = new Blob([savedData], {
+      type: "application/json"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "dr-sarah-medical-match-save.json";
+    link.click();
+
+    URL.revokeObjectURL(url);
+  });
+
+  // OPEN IMPORT FILE PICKER
+  importButton.addEventListener("click", () => {
+    fileInput.click();
+  });
+
+  // IMPORT PROGRESS
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files[0];
+
+    if (!file) return;
+
+    try {
+      const imported = JSON.parse(await file.text());
+
+      const importedLevel = Number(imported.level);
+      const importedCoins = Number(imported.coins);
+      const importedXP = Number(imported.xp);
+
+      if (
+        !imported ||
+        typeof imported !== "object" ||
+        !Number.isInteger(importedLevel) ||
+        importedLevel < 1 ||
+        !Number.isFinite(importedCoins) ||
+        importedCoins < 0 ||
+        !Number.isFinite(importedXP) ||
+        importedXP < 0
+      ) {
+        throw new Error("Invalid save file.");
+      }
+
+      const confirmed = confirm(
+        "Import this progress? Your current progress on this site will be replaced."
+      );
+
+      if (!confirmed) {
+        fileInput.value = "";
+        return;
+      }
+
+      const importedSave = {
+        coins: importedCoins,
+        xp: importedXP,
+        level: importedLevel,
+        heartsCollected: Math.max(
+          0,
+          Number(imported.heartsCollected) || 0
+        ),
+        targetHearts: Math.max(
+          1,
+          Number(imported.targetHearts) || 20
+        ),
+        completedDestinations: Math.max(
+          0,
+          Number(imported.completedDestinations) || 0
+        ),
+        achievements: Array.isArray(imported.achievements)
+          ? imported.achievements
+          : []
+      };
+
+      localStorage.setItem(
+        SAVE_KEY,
+        JSON.stringify(importedSave)
+      );
+
+      alert("Progress imported successfully! The game will now reload.");
+
+      location.reload();
+
+    } catch (error) {
+      alert("Could not import this save file. Please select a valid Medical Match save.");
+      console.error("Progress import failed:", error);
+    }
+
+    fileInput.value = "";
+  });
+}
+
 /* =========================================
    INITIALISE
 ========================================= */
 
 function initialiseGame() {
+  setupProgressTransfer();
+
   loadSave();
   startLevel();
 

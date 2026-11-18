@@ -266,6 +266,23 @@
   <small id="careerProgressText">0 / 500 XP</small>
 </div>
 
+<div class="progress-transfer">
+  <button type="button" id="exportProgressButton">
+    ↓ Export Progress
+  </button>
+
+  <button type="button" id="importProgressButton">
+    ↑ Import Progress
+  </button>
+
+  <input
+    type="file"
+    id="importProgressFile"
+    accept=".json,application/json"
+    hidden
+  >
+</div>
+
     <div class="medical-destinations">
       <div class="destination active" id="destination1">🏥 <span>General Hospital</span></div>
       <div class="destination locked" id="destination2">❤️ <span>Cardiology Centre</span> 🔒</div>
