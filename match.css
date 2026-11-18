@@ -286,6 +286,9 @@ button {
 }
 
 .board-frame {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   padding: 8px;
   border: 2px solid #ffffff18;
   border-radius: 19px;
@@ -304,23 +307,78 @@ button {
   -webkit-touch-callout: none;
 }
 
+
 .tile {
   display: grid;
   place-items: center;
   min-width: 0;
   aspect-ratio: 1;
-  border: 2px solid #ffffff30;
-  border-radius: 12px;
-  background: linear-gradient(145deg, #ffffff2c, #ffffff08);
-  box-shadow: inset 0 -4px 0 #00000018, 0 3px 5px #00000020;
+
+  border: 2px solid #ffffff45;
+  border-radius: 14px;
+
+  background:
+    linear-gradient(145deg, #ffffff38, #ffffff0c);
+
+  box-shadow:
+    inset 0 -4px 0 #00000020,
+    inset 0 2px 3px #ffffff25,
+    0 4px 8px #00000025;
+
   font-size: clamp(17px, 5vw, 30px);
-  transition: transform 0.15s, opacity 0.15s, filter 0.15s;
+
+  transition:
+    transform 0.18s cubic-bezier(.2,.8,.2,1),
+    opacity 0.18s ease,
+    filter 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
+
+  position: relative;
+  overflow: hidden;
+  will-change: transform;
 }
+
+/* Tile hover feedback */
+.tile:hover {
+  transform: scale(1.05);
+  filter: brightness(1.15);
+  border-color: #ffffff80;
+}
+
+/* Tile press feedback */
+.tile:active {
+  transform: scale(0.91);
+  filter: brightness(1.25);
+}
+
+/* Selected tile */
+.tile.selected {
+  transform: scale(1.09);
+  border-color: #ffe66d;
+  filter: brightness(1.2);
+
+  box-shadow:
+    0 0 0 3px #ffe66d45,
+    0 0 16px #ffe66d90,
+    inset 0 0 12px #ffffff30;
+
+  z-index: 2;
+}
+
+/* Better touch experience */
+@media (hover: none) {
+  .tile:hover {
+    transform: none;
+    filter: none;
+  }
+}
+
 
 .tile:active {
   transform: scale(0.9);
@@ -342,13 +400,28 @@ button {
 }
 
 @keyframes match-pop {
-  50% {
-    transform: scale(1.2);
-    opacity: 0.5;
+  0% {
+    transform: scale(1);
+    opacity: 1;
+    filter: brightness(1);
   }
+
+  25% {
+    transform: scale(1.28);
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+
+  55% {
+    transform: scale(1.12);
+    opacity: 0.75;
+    filter: brightness(1.5);
+  }
+
   100% {
     transform: scale(0);
     opacity: 0;
+    filter: brightness(2);
   }
 }
 
@@ -557,37 +630,49 @@ button {
   animation: special-glow 1.3s ease-in-out infinite alternate;
   font-size: clamp(19px, 5.5vw, 32px);
 }
-
+/* LIGHTNING POWER-UP */
 .tile.special-row {
-  background: linear-gradient(145deg, #ffe27a, #ff9d36);
-  box-shadow: 0 0 13px #ffb833a0;
+  background: linear-gradient(145deg, #e7c968, #a77b2d);
+  border-color: #ffe7a0;
+  box-shadow:
+    0 0 9px #e7c96865,
+    inset 0 2px 4px #ffffff45;
 }
 
+/* BOMB POWER-UP */
 .tile.special-bomb {
-  background: linear-gradient(145deg, #ff8d9e, #e43d74);
-  box-shadow: 0 0 15px #ff638b;
+  background: linear-gradient(145deg, #d87972, #98434c);
+  border-color: #f1aaa0;
+  box-shadow:
+    0 0 10px #d8797265,
+    inset 0 2px 4px #ffffff45;
 }
 
+/* RAINBOW POWER-UP */
 .tile.special-rainbow {
   background: linear-gradient(
     135deg,
-    #ff758c,
-    #ffcf69,
-    #5ee0c2,
-    #75aaff,
-    #c7a0ff
+    #c87985,
+    #c9a45f,
+    #579c91,
+    #657fae,
+    #9176ae
   );
-  box-shadow: 0 0 18px #ffffff90;
+  border-color: #e5d5ef;
+  box-shadow:
+    0 0 12px #c5a9d955,
+    inset 0 2px 4px #ffffff55;
 }
 
 @keyframes special-glow {
   from {
-    transform: scale(0.97);
+    transform: scale(0.98);
     filter: brightness(1);
   }
+
   to {
-    transform: scale(1.06);
-    filter: brightness(1.3);
+    transform: scale(1.03);
+    filter: brightness(1.12);
   }
 }
 
@@ -1505,6 +1590,53 @@ body.boss-level #gameBoard {
   box-shadow: 0 0 25px rgba(255, 100, 30, 0.2);
 }
 
+/* =====================================
+   DR AFOR - BOSS BATTLE ATMOSPHERE
+===================================== */
+
+body.boss-level .game-board,
+body.boss-level #gameBoard {
+  animation: bossBoardPulse 2.5s ease-in-out infinite;
+}
+
+body.boss-level #gameMessage {
+  animation: bossMessagePulse 2s ease-in-out infinite;
+}
+
+body.boss-level .board-frame {
+  border-color: rgba(255, 110, 55, 0.65);
+  box-shadow:
+    0 0 15px rgba(255, 90, 35, 0.15),
+    0 0 30px rgba(255, 90, 35, 0.08);
+}
+
+@keyframes bossBoardPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 100, 30, 0.15);
+  }
+
+  50% {
+    box-shadow: 0 0 28px rgba(255, 100, 30, 0.4);
+  }
+}
+
+@keyframes bossMessagePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.75;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body.boss-level .game-board,
+  body.boss-level #gameBoard,
+  body.boss-level #gameMessage {
+    animation: none;
+  }
+}
 
 /* =====================================
    DR AFOR'S ACHIEVEMENT COLLECTION
@@ -1681,4 +1813,650 @@ body.boss-level #gameBoard {
 .install-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 9px 22px rgba(0, 190, 160, 0.3);
+}
+
+
+/* =====================================
+   MEDICAL MATCH - TILE EXPLOSION EFFECTS
+===================================== */
+
+@keyframes tilePop {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+
+  25% {
+    transform: scale(1.28) rotate(5deg);
+    opacity: 1;
+    filter: brightness(2);
+    box-shadow: 0 0 25px #ffe66d;
+  }
+
+  55% {
+    transform: scale(0.8) rotate(-7deg);
+    opacity: 0.75;
+    filter: brightness(1.7);
+  }
+
+  100% {
+    transform: scale(0) rotate(15deg);
+    opacity: 0;
+    filter: brightness(2);
+  }
+}
+
+.tile.matched {
+  animation: tilePop 0.27s ease-in forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+
+
+/* Glowing match effect */
+@keyframes matchGlow {
+  0% {
+    box-shadow: 0 0 0 transparent;
+  }
+
+  50% {
+    box-shadow: 0 0 22px #ffe66d;
+  }
+
+  100% {
+    box-shadow: 0 0 0 transparent;
+  }
+}
+
+.tile.match-glow {
+  animation: matchGlow 0.35s ease-out;
+}
+
+/* Respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile.matched,
+  .tile.match-glow {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* =====================================
+   PREMIUM COMBO ANNOUNCEMENTS
+===================================== */
+
+/* =====================================
+   FLOATING ARCADE COMBO ANNOUNCEMENTS
+===================================== */
+
+.combo-announcement {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+
+  z-index: 100;
+  width: max-content;
+  max-width: 95%;
+
+  padding: 8px;
+
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+
+  color: #ffe66d;
+  font-size: clamp(23px, 7vw, 38px);
+  font-weight: 1000;
+  text-align: center;
+  letter-spacing: 1.5px;
+
+  text-shadow:
+    0 2px 3px #000000,
+    0 0 10px #ffe66d,
+    0 0 22px #ff9c28;
+
+  pointer-events: none;
+  white-space: nowrap;
+
+  animation: comboEntrance 1.25s ease forwards;
+}
+
+.combo-super {
+  color: #ffb52e;
+  text-shadow: 0 0 12px #ff8c00, 0 0 28px #ffb52e;
+}
+
+.combo-master {
+  color: #52d9ff;
+  text-shadow: 0 0 12px #168dff, 0 0 28px #52d9ff;
+}
+
+.combo-unstoppable {
+  color: #ff70dc;
+  text-shadow: 0 0 12px #d52cff, 0 0 30px #ff70dc;
+}
+
+.combo-mega {
+  color: #ffe66d;
+  font-size: clamp(27px, 8vw, 44px);
+  text-shadow:
+    0 0 12px #ff6b00,
+    0 0 25px #ffcc33,
+    0 0 40px #ff6b00;
+}
+
+.combo-incredible,
+.combo-amazing,
+.combo-great {
+  color: #70f5dc;
+  text-shadow: 0 0 12px #00c9a7, 0 0 25px #70f5dc;
+}
+
+/* =====================================
+   DR AFOR - PREMIUM CAREER DISPLAY
+===================================== */
+
+.career-map-progress {
+  margin: 20px 0;
+  padding: 18px;
+  background: linear-gradient(135deg, #102747, #0b1930);
+  border: 1px solid rgba(91, 166, 255, 0.25);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-family: inherit;
+}
+
+.career-map-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.career-map-info small {
+  display: block;
+  color: #91b8e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.career-map-info h3 {
+  margin: 6px 0;
+  color: #ffffff;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.career-map-info p {
+  margin: 0;
+  color: #b4c9e2;
+  font-size: 12px;
+}
+
+.career-map-xp {
+  min-width: 65px;
+  text-align: right;
+}
+
+.career-map-xp strong {
+  display: block;
+  color: #ffd477;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.career-map-xp small {
+  margin-top: 5px;
+  color: #ffd477;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.career-map-track {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  background: #071326;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+}
+
+.career-map-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #2588ff, #55d6ff);
+  border-radius: inherit;
+  box-shadow: 0 0 12px rgba(65, 173, 255, 0.55);
+  transition: width 0.7s ease;
+}
+
+#careerProgressText {
+  display: block;
+  margin-top: 9px;
+  color: #a9c5e7;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .career-map-progress {
+    padding: 15px;
+    margin: 15px 0;
+  }
+
+  .career-map-info h3 {
+    font-size: 17px;
+  }
+
+  .career-map-xp strong {
+    font-size: 22px;
+  }
+}
+
+/* =====================================
+   BOSS LEVEL INTRODUCTION
+===================================== */
+
+.boss-announcement {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 100;
+  width: min(88%, 340px);
+  padding: 22px 16px;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  background: linear-gradient(145deg, #35151c, #151c30);
+  border: 1px solid rgba(255, 110, 75, 0.7);
+  border-radius: 16px;
+  box-shadow: 0 0 35px rgba(255, 65, 45, 0.3);
+  animation: bossIntro 2.5s ease forwards;
+}
+
+.boss-warning,
+.boss-announcement strong,
+.boss-announcement small {
+  display: block;
+}
+
+.boss-warning {
+  color: #ff9b76;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.boss-announcement strong {
+  margin: 10px 0;
+  color: #fff;
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.boss-announcement small {
+  color: #ffd0c2;
+  font-size: 12px;
+}
+
+@keyframes bossIntro {
+  0% {
+    opacity: 0;
+    scale: 0.7;
+  }
+
+  15%, 75% {
+    opacity: 1;
+    scale: 1;
+  }
+
+  100% {
+    opacity: 0;
+    scale: 1.05;
+  }
+}
+
+/* =====================================
+   MEDICAL WORLD - LEVEL BACKGROUNDS
+===================================== */
+
+body.world-level-1 {
+  background:
+    radial-gradient(circle at 15% 10%, #243b60 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #193d51 0, transparent 35%),
+    #101d35;
+}
+
+body.world-level-2 {
+  background:
+    radial-gradient(circle at 15% 10%, #612b3c 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #421d35 0, transparent 35%),
+    #211326;
+}
+
+body.world-level-3 {
+  background:
+    radial-gradient(circle at 15% 10%, #164c65 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #183e59 0, transparent 35%),
+    #101c35;
+}
+
+body.world-level-4 {
+  background:
+    radial-gradient(circle at 15% 10%, #20583f 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #164b46 0, transparent 35%),
+    #102b29;
+}
+
+body.world-level-5 {
+  background:
+    radial-gradient(circle at 15% 10%, #75401e 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #542b27 0, transparent 35%),
+    #251925;
+}
+
+body.world-level-6 {
+  background:
+    radial-gradient(circle at 15% 10%, #344d70 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #253c58 0, transparent 35%),
+    #111c2c;
+}
+
+body.world-level-7 {
+  background:
+    radial-gradient(circle at 15% 10%, #41336e 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #25345e 0, transparent 35%),
+    #17182f;
+}
+
+body.world-level-8 {
+  background:
+    radial-gradient(circle at 15% 10%, #185a5b 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #17444d 0, transparent 35%),
+    #10282e;
+}
+
+/* WORLD 9 — CRIMSON CLINIC */
+body.world-level-9 {
+  background:
+    radial-gradient(circle at 15% 10%, #713b48 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #492b42 0, transparent 35%),
+    #241923;
+}
+
+/* WORLD 10 — ARCTIC WARD */
+body.world-level-10 {
+  background:
+    radial-gradient(circle at 15% 10%, #426b83 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #294d68 0, transparent 35%),
+    #142331;
+}
+
+/* WORLD 11 — EMERALD LAB */
+body.world-level-11 {
+  background:
+    radial-gradient(circle at 15% 10%, #356b55 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #245044 0, transparent 35%),
+    #142820;
+}
+
+/* WORLD 12 — GOLDEN RESEARCH */
+body.world-level-12 {
+  background:
+    radial-gradient(circle at 15% 10%, #80613a 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #58452e 0, transparent 35%),
+    #292218;
+}
+
+/* WORLD 13 — MIDNIGHT THEATRE */
+body.world-level-13 {
+  background:
+    radial-gradient(circle at 15% 10%, #45416f 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #302e59 0, transparent 35%),
+    #19192e;
+}
+
+/* WORLD 14 — CORAL BAY */
+body.world-level-14 {
+  background:
+    radial-gradient(circle at 15% 10%, #79504b 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #583b49 0, transparent 35%),
+    #281c27;
+}
+
+/* WORLD 15 — DEEP OCEAN */
+body.world-level-15 {
+  background:
+    radial-gradient(circle at 15% 10%, #285b75 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #20475e 0, transparent 35%),
+    #10212e;
+}
+
+/* WORLD 16 — LAVENDER WARD */
+body.world-level-16 {
+  background:
+    radial-gradient(circle at 15% 10%, #68517b 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #443b65 0, transparent 35%),
+    #211b31;
+}
+
+/* WORLD 17 — FOREST MEDICAL CENTRE */
+body.world-level-17 {
+  background:
+    radial-gradient(circle at 15% 10%, #42634a 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #294d3e 0, transparent 35%),
+    #15271f;
+}
+
+/* WORLD 18 — COPPER LAB */
+body.world-level-18 {
+  background:
+    radial-gradient(circle at 15% 10%, #80513b 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #593b35 0, transparent 35%),
+    #291e1b;
+}
+
+/* WORLD 19 — CYBER WARD */
+body.world-level-19 {
+  background:
+    radial-gradient(circle at 15% 10%, #286b70 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #284b68 0, transparent 35%),
+    #12252d;
+}
+
+/* WORLD 20 — ROYAL MEDICAL CENTRE */
+body.world-level-20 {
+  background:
+    radial-gradient(circle at 15% 10%, #66513c 0, transparent 35%),
+    radial-gradient(circle at 90% 80%, #494064 0, transparent 35%),
+    #211d2b;
+}
+
+/* ELECTRIC LIGHTNING STRIKE */
+.board-frame.lightning-strike::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      115deg,
+      transparent 44%,
+      #ffffff 46%,
+      #8beaff 48%,
+      #ffffff 49%,
+      #168cff 51%,
+      transparent 54%
+    );
+
+  clip-path: polygon(
+    53% 0,
+    44% 28%,
+    55% 28%,
+    37% 62%,
+    48% 62%,
+    35% 100%,
+    66% 54%,
+    55% 54%,
+    69% 25%,
+    57% 25%
+  );
+
+  filter:
+    drop-shadow(0 0 5px #ffffff)
+    drop-shadow(0 0 12px #35cfff)
+    drop-shadow(0 0 22px #168cff);
+
+  animation: electric-lightning-strike 0.55s ease-out forwards;
+}
+
+@keyframes electric-lightning-strike {
+  0% {
+    opacity: 0;
+    transform: scale(0.75);
+  }
+  12% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 0.25;
+  }
+  38% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* MEDICAL BOMB EXPLOSION */
+.board-frame.explosion-flash::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 19;
+  pointer-events: none;
+  border-radius: inherit;
+
+  background:
+    radial-gradient(
+      circle at center,
+      #fff7b8 0%,
+      #ffb02e 12%,
+      #ff642e 28%,
+      transparent 65%
+    );
+
+  animation: medical-bomb-blast 0.65s ease-out forwards;
+}
+
+@keyframes medical-bomb-blast {
+  0% {
+    opacity: 0;
+    transform: scale(0.15);
+  }
+  25% {
+    opacity: 0.9;
+    transform: scale(0.8);
+  }
+  55% {
+    opacity: 0.65;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+/* REFINED MEDICAL TILE COLOURS */
+
+/* Heart */
+.tile-type-0 {
+  background: linear-gradient(145deg, #d96b7d, #963e55);
+  border-color: #e99aa5;
+}
+
+/* Water */
+.tile-type-1 {
+  background: linear-gradient(145deg, #579bbd, #315f83);
+  border-color: #8bbbd2;
+}
+
+/* Medicine */
+.tile-type-2 {
+  background: linear-gradient(145deg, #63ad8b, #36775f);
+  border-color: #96c9ad;
+}
+
+/* Stethoscope */
+.tile-type-3 {
+  background: linear-gradient(145deg, #718fbd, #435d8c);
+  border-color: #a2b6d5;
+}
+
+/* Star */
+.tile-type-4 {
+  background: linear-gradient(145deg, #d9b96e, #987b3d);
+  border-color: #ead39a;
+}
+
+/* DNA */
+.tile-type-5 {
+  background: linear-gradient(145deg, #579f9c, #326d70);
+  border-color: #91c7c1;
+}
+
+/* Bandage */
+.tile-type-6 {
+  background: linear-gradient(145deg, #c58c79, #895b50);
+  border-color: #dfb5a4;
+}
+
+/* Thermometer */
+.tile-type-7 {
+  background: linear-gradient(145deg, #9a83b9, #675486);
+  border-color: #c0add5;
+}
+
+/* PREMIUM MEDICAL TILE FINISH */
+
+.tile[class*="tile-type-"] {
+  border-radius: 14px;
+
+  box-shadow:
+  inset 0 2px 4px #ffffff35,
+  inset 0 -3px 0 #00000025,
+  0 3px 6px #00000030;
+
+  text-shadow:
+    0 2px 3px #00000055,
+    0 0 8px #ffffff45;
+}
+
+/* Smooth tile interaction */
+.tile[class*="tile-type-"]:hover {
+  filter: brightness(1.16) saturate(1.15);
+}
+
+/* Pressed tile feedback */
+.tile[class*="tile-type-"]:active {
+  box-shadow:
+    inset 0 3px 5px #ffffff40,
+    inset 0 -2px 0 #00000030;
 }

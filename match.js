@@ -16,7 +16,9 @@ const TILE_TYPES = [
   { emoji: "💊", name: "Medicine" },
   { emoji: "🩺", name: "Stethoscope" },
   { emoji: "⭐", name: "Star" },
-  { emoji: "🧬", name: "DNA" }
+  { emoji: "🧬", name: "DNA" },
+  { emoji: "🩹", name: "Bandage" },
+  { emoji: "🌡️", name: "Thermometer" },
 ];
 
 const SPECIALS = {
@@ -42,6 +44,86 @@ let level = 1;
 let coins = 0;
 let totalXP = 0;
 let achievements = [];
+
+/* =====================================
+   DR AFOR - MEDICAL CAREER SYSTEM
+===================================== */
+
+const CAREER_RANKS = [
+  {
+    name: "Medical Student",
+    minXP: 0,
+    icon: "🎓"
+  },
+  {
+    name: "Junior Doctor",
+    minXP: 500,
+    icon: "🩺"
+  },
+  {
+    name: "Resident Doctor",
+    minXP: 1500,
+    icon: "🏥"
+  },
+  {
+    name: "Senior Specialist",
+    minXP: 3500,
+    icon: "⚕️"
+  },
+  {
+    name: "Chief Medical Officer",
+    minXP: 7000,
+    icon: "👑"
+  }
+];
+
+function getCareerRank() {
+  let currentRank = CAREER_RANKS[0];
+
+  for (const rank of CAREER_RANKS) {
+    if (totalXP >= rank.minXP) {
+      currentRank = rank;
+    }
+  }
+
+  return currentRank;
+}
+
+function getNextCareerRank() {
+  return CAREER_RANKS.find(
+    rank => totalXP < rank.minXP
+  ) || null;
+}
+
+function updateCareerDisplay() {
+  const currentRank = getCareerRank();
+  const nextRank = getNextCareerRank();
+
+  $("careerRankName").textContent = currentRank.name;
+  $("careerXP").textContent = totalXP;
+
+  if (!nextRank) {
+    $("careerNextRank").textContent = "Highest medical rank achieved!";
+    $("careerProgress").style.width = "100%";
+    $("careerProgressText").textContent = "CAREER COMPLETE";
+    return;
+  }
+
+  const xpNeeded = nextRank.minXP - currentRank.minXP;
+  const xpEarned = totalXP - currentRank.minXP;
+
+  const progress = Math.min(
+    100,
+    Math.max(0, (xpEarned / xpNeeded) * 100)
+  );
+
+  $("careerNextRank").textContent = "Next: " + nextRank.name;
+  $("careerProgress").style.width = progress + "%";
+
+  $("careerProgressText").textContent =
+    `${xpEarned} / ${xpNeeded} XP to next rank`;
+}
+
 let soundEnabled = true;
 let musicEnabled = true;
 let audioContext = null;
@@ -1263,7 +1345,7 @@ function triggerMedicalEffect(effect) {
 
   const effects = {
     bomb: ["board-shake", "explosion-flash"],
-    lightning: ["board-shake", "explosion-flash"],
+    lightning: ["board-shake", "lightning-strike"],
     rainbow: ["board-shake", "rainbow-burst"]
   };
 
@@ -1383,34 +1465,65 @@ function showComboAnnouncement(cascade, matchCount) {
   if (!container) return;
 
   let message;
+  let tier;
 
-  if (cascade >= 4) {
-    message = "🚀 UNSTOPPABLE!";
+  if (cascade >= 5) {
+    message = "🚀 MEGA COMBO!";
+    tier = "mega";
+  } else if (cascade >= 4) {
+    message = "UNSTOPPABLE!";
+    tier = "unstoppable";
   } else if (cascade === 3) {
-    message = "🏆 MEDICAL MASTER!";
+    message = "MEDICAL MASTER!";
+    tier = "master";
   } else if (cascade === 2) {
-    message = "🔥 SUPER COMBO!";
+    message = "SUPER COMBO!";
+    tier = "super";
   } else if (matchCount >= 6) {
-    message = "💎 INCREDIBLE!";
+    message = "INCREDIBLE!";
+    tier = "incredible";
   } else if (matchCount >= 5) {
-    message = "🌟 AMAZING!";
+    message = "AMAZING!";
+    tier = "amazing";
   } else if (matchCount >= 4) {
-    message = "⚡ GREAT MATCH!";
+    message = "GREAT MATCH!";
+    tier = "great";
   } else {
-    message = "✨ NICE!";
+    message = "NICE!";
+    tier = "normal";
   }
 
   const announcement = document.createElement("div");
-  announcement.className = "combo-announcement";
+
+  announcement.className = `combo-announcement combo-${tier}`;
   announcement.textContent = message;
 
   container.appendChild(announcement);
 
   setTimeout(() => {
     announcement.remove();
-  }, 1000);
+  }, 1250);
 }
 
+function showBossAnnouncement() {
+  const container = document.querySelector(".board-section");
+  if (!container) return;
+
+  const announcement = document.createElement("div");
+
+  announcement.className = "boss-announcement";
+  announcement.innerHTML = `
+    <span class="boss-warning">MEDICAL EMERGENCY</span>
+    <strong>BOSS LEVEL ${level}</strong>
+    <small>Dr AFOR, your biggest challenge awaits!</small>
+  `;
+
+  container.appendChild(announcement);
+
+  setTimeout(() => {
+    announcement.remove();
+  }, 2500);
+}
 
 /* =========================================
    MEDICAL MATCH — SCORE AND HEART REWARDS
@@ -1720,6 +1833,17 @@ function finishLevel(won) {
 
 const isBossLevel = level % 5 === 0;
 
+const worldStage = Math.min(
+  20,
+  Math.ceil(level / 5)
+);
+
+document.body.className = document.body.className
+  .replace(/\bworld-level-\d+\b/g, "")
+  .trim();
+
+document.body.classList.add(`world-level-${worldStage}`);
+
 const earnedCoins = won
   ? 30 + level * 5 + (isBossLevel ? 50 : 0)
   : 5;
@@ -1729,10 +1853,17 @@ const earnedXP = won
   : 5;
 
   coins += earnedCoins;
-  totalXP += earnedXP;
+
+const previousRank = getCareerRank();
+
+totalXP += earnedXP;
+
+const newRank = getCareerRank();
+const rankPromoted = won && newRank.name !== previousRank.name;
 
   saveProgress();
   updateCoinDisplay();
+  updateCareerDisplay();
 
 if (won) {
   unlockAchievement("heartHealer");
@@ -1774,6 +1905,13 @@ $("resultTitle").textContent = won
   $("resultMessage").textContent = won
   ? "This is only the beginning, Dr Afor. Never stop believing in the amazing doctor you're becoming. I'm proud of you! ❤️"
   : `Every great doctor faces challenges, Dr Afor. Don't give up on your dream. I'm rooting for you! ❤️`;
+
+  if (rankPromoted) {
+  $("resultEyebrow").textContent = "🎓 CAREER PROMOTION!";
+  $("resultTitle").textContent = "Congratulations, Dr Sarah!";
+  $("resultMessage").textContent =
+    `You've been promoted to ${newRank.name}! Your dedication is taking you closer to your dream.`;
+}
 
   $("resultScore").textContent = score;
   $("resultCoins").textContent = earnedCoins;
@@ -1820,13 +1958,30 @@ function startLevel() {
   const isBossLevel = level % 5 === 0;
   document.body.classList.toggle("boss-level", isBossLevel);
   startBackgroundMusic(isBossLevel ? "boss" : "normal");
-  moves = isBossLevel ? 15 : 20;
+  const baseMoves =
+    level <= 5 ? 35 :
+    level <= 10 ? 33 :
+    level <= 20 ? 31 :
+    level <= 35 ? 29 :
+    level <= 50 ? 27 :
+    level <= 75 ? 25 : 23;
+
+  moves = isBossLevel ? baseMoves - 2 : baseMoves;
   score = 0;
   heartsCollected = 0;
   bestCombo = 0;
   currentCombo = 0;
 
- targetHearts = Math.min(20 + (level - 1) * 5, 50);
+targetHearts =
+  level <= 5 ? 20 :
+  level <= 10 ? 25 :
+  level <= 20 ? 30 :
+  level <= 35 ? 35 :
+  level <= 50 ? 40 : 45;
+
+if (isBossLevel) {
+  targetHearts += 5;
+}
 
 const missionMessages = [
   "❤️ Mission: Collect hearts to help your patients!",
@@ -1847,9 +2002,17 @@ $("gameMessage").textContent =
   generateBoard();
   updateStats();
   renderBoard();
+  if (isBossLevel) {
+  setTimeout(showBossAnnouncement, 400);
+}
 
+if (isBossLevel) {
   $("gameMessage").textContent =
-    "Match three or more pieces. Try making four or five!";
+    "🚨 BOSS LEVEL! Collect the required hearts before your moves run out!";
+} else {
+  $("gameMessage").textContent =
+    missionMessages[(level - 1) % missionMessages.length];
+}
 }
 
 $("restartButton").addEventListener("click", () => {
@@ -1877,6 +2040,7 @@ $("nextLevelButton").addEventListener("click", () => {
 });
 
 function updateMedicalWorldMap() {
+  updateCareerDisplay();
   const destinations = [
     "General Hospital",
     "Cardiology Centre",
