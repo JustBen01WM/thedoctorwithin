@@ -2695,3 +2695,67 @@ body.world-level-16 {
   from { opacity: 0.55; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1.15); }
 }
+
+/* PERMANENT BOSS TROPHY AWARD */
+.boss-trophy-award {
+  border: 2px solid #ffd447 !important;
+  background: linear-gradient(
+    120deg,
+    #fff1b8,
+    #ffe0f3,
+    #dff7ff,
+    #fff1b8
+  ) !important;
+  box-shadow:
+    0 0 12px #ffd447,
+    0 0 24px #ff69b4,
+    0 0 35px #55dfff !important;
+  animation: award-trophy-glow 2s ease-in-out infinite alternate;
+}
+
+.boss-trophy-award .achievement-icon {
+  font-size: 38px;
+  filter:
+    drop-shadow(0 0 5px #ffcf33)
+    drop-shadow(0 0 12px #ff8c00)
+    drop-shadow(0 0 18px #ff55b8);
+  animation: award-trophy-float 1.8s ease-in-out infinite;
+}
+
+@keyframes award-trophy-glow {
+  from {
+    box-shadow: 0 0 10px #ffd447, 0 0 18px #ff69b4;
+  }
+  to {
+    box-shadow: 0 0 18px #ffd447, 0 0 30px #55dfff;
+  }
+}
+
+@keyframes award-trophy-float {
+  50% {
+    transform: translateY(-5px) scale(1.12);
+  }
+}
+
+.footer-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.footer-buttons button {
+  flex: 1;
+  min-width: 130px;
+}
+
+@media (max-width: 420px) {
+  .footer-buttons {
+    flex-direction: column;
+  }
+
+  .footer-buttons button {
+    width: 100%;
+  }
+}

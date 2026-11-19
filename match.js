@@ -47,6 +47,7 @@ let achievements = [];
 let bossTimerInterval = null;
 let bossTimeLeft = 300;
 let bossTimerStarted = false;
+let returnLevel = null;
 
 /* =====================================
    DR AFOR - MEDICAL CAREER SYSTEM
@@ -216,9 +217,9 @@ const achievementDetails = {
     description: "Reach Level 5!"
   },
   bossSlayer: {
-    name: "Boss Slayer",
+    name: "Boss Champion Trophy",
     emoji: "🏆",
-    description: "Defeat your first Boss Level!"
+    description: "Defeat a Boss Level and claim your trophy!"
   },
   medicalLegend: {
     name: "Medical Legend",
@@ -226,7 +227,6 @@ const achievementDetails = {
     description: "Complete 10 levels!"
   }
 };
-
 function unlockAchievement(id) {
   if (achievements.includes(id)) return;
 
@@ -234,6 +234,7 @@ function unlockAchievement(id) {
   if (!achievement) return;
 
   achievements.push(id);
+
   saveProgress();
   renderAchievements();
 
@@ -241,18 +242,20 @@ function unlockAchievement(id) {
     `${achievement.emoji} ACHIEVEMENT UNLOCKED: ${achievement.name}!`;
 
   playArcadeSound("achievement");
+}
 
 function renderAchievements() {
   const list = $("achievementList");
+
   $("achievementCount").textContent =
-  `${achievements.length}/5`;
+    `${achievements.length}/${Object.keys(achievementDetails).length}`;
 
   list.innerHTML = Object.entries(achievementDetails)
     .map(([id, achievement]) => {
       const unlocked = achievements.includes(id);
 
       return `
-        <div class="achievement-item ${unlocked ? "unlocked" : "locked"}">
+        <div class="achievement-item ${unlocked ? "unlocked" : "locked"} ${id === "bossSlayer" && unlocked ? "boss-trophy-award" : ""}">
           <div class="achievement-icon">${achievement.emoji}</div>
           <div class="achievement-info">
             <strong>${achievement.name}</strong>
@@ -273,7 +276,6 @@ $("quickAchievementButton").addEventListener("click", () => {
 $("closeAchievementButton").addEventListener("click", () => {
   $("achievementOverlay").classList.add("hidden");
 });
-}
 
 function saveProgress() {
   try {
@@ -2137,7 +2139,6 @@ if (isBossLevel) {
     missionMessages[(level - 1) % missionMessages.length];
 }
 }
-
 $("restartButton").addEventListener("click", () => {
   if (busy) return;
 
@@ -2149,6 +2150,41 @@ $("restartJourneyButton").addEventListener("click", () => {
   if (busy) return;
 
   restartAforJourney();
+});
+
+$("previousLevelButton").addEventListener("click", () => {
+  if (busy) return;
+
+  if (level <= 1) {
+    $("gameMessage").textContent =
+      "You're already at Level 1, Dr Sarah!";
+    return;
+  }
+
+  returnLevel = level;
+
+  level--;
+  saveProgress();
+  startLevel();
+
+  $("returnLevelButton").classList.remove("hidden");
+
+  playSound(450);
+});
+
+// INSERT THE RETURN BUTTON LISTENER HERE
+$("returnLevelButton").addEventListener("click", () => {
+  if (busy || returnLevel === null) return;
+
+  level = returnLevel;
+  returnLevel = null;
+
+  saveProgress();
+  startLevel();
+
+  $("returnLevelButton").classList.add("hidden");
+
+  playSound(450);
 });
 
 $("nextLevelButton").addEventListener("click", () => {
