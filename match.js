@@ -1984,11 +1984,11 @@ if (won) {
 $("nextLevelButton").textContent =
     won ? "Continue to Next Level →" : "🔄 RETRY THIS LEVEL";
 
-  $("nextLevelButton").dataset.won = String(won);
+$("resultNextLevelButton").dataset.won = String(won);
 
   $("resultOverlay").classList.remove("hidden");
 
-  // Unlock Dr Afor's personal letter after his first victory.
+  // Unlock Dr Afor's personal letter after her first victory.
 if (won && !localStorage.getItem("aforLetterUnlocked")) {
   setTimeout(() => {
     const letter = $("aforLetter");
@@ -2191,6 +2191,30 @@ $("nextLevelButton").addEventListener("click", () => {
   }
 
   startLevel();
+});
+
+$("resultNextLevelButton").addEventListener("click", () => {
+  if (busy) return;
+
+  const won =
+    $("resultNextLevelButton").dataset.won === "true";
+
+  if (!won) return;
+
+  unlockedLevel = Math.max(unlockedLevel, level + 1);
+  level++;
+
+  saveProgress();
+  startLevel();
+
+  playSound(450);
+});
+
+$("playAgainButton").addEventListener("click", () => {
+  if (busy) return;
+
+  startLevel();
+  playSound(450);
 });
 
 function updateMedicalWorldMap() {
