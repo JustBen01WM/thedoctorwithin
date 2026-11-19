@@ -1998,7 +1998,7 @@ function stopBossTimer() {
 function startBossTimer() {
   stopBossTimer();
 
- bossTimeLeft = 300;
+ bossTimeLeft = level === 25 ? 420 : 300;
 
   let banner = document.getElementById("bossTimerBanner");
 
