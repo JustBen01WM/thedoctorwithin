@@ -7,7 +7,7 @@
 
 const $ = (id) => document.getElementById(id);
 
-const SIZE = 8;
+const SIZE = 9;
 const SAVE_KEY = "doctorWithinMedicalMatch";
 
 const TILE_TYPES = [
@@ -616,7 +616,7 @@ function generateBoard() {
 function renderBoard() {
   const boardElement = $("gameBoard");
 
-  // Create the 64 tile elements only once.
+  // Create the 81 tile elements only once.
   if (boardElement.children.length !== SIZE * SIZE) {
     boardElement.innerHTML = "";
 

@@ -302,7 +302,7 @@ button {
     inset 0 2px 3px #ffffff25,
     0 4px 8px #00000025;
 
-  font-size: clamp(17px, 5vw, 30px);
+  font-size: clamp(18px, 4.2vw, 25px);
 
 transition: transform 0.11s ease;
 
@@ -2488,13 +2488,14 @@ body.world-level-16 {
 
 .game-board {
   display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 5px;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  grid-template-rows: repeat(9, minmax(0, 1fr));
+  gap: 4px;
 
   width: 100%;
   aspect-ratio: 1;
   box-sizing: border-box;
-  padding: 8px;
+  padding: 7px;
 
   border: 2px solid #e9c7f5;
   border-radius: 18px;
