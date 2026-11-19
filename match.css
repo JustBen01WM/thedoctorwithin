@@ -2608,3 +2608,90 @@ body.world-level-16 {
     padding: 10px;
   }
 }
+
+/* BOSS CHAMPION TROPHY */
+.boss-trophy {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 15px auto 20px;
+  animation: trophy-enter 0.8s ease-out;
+}
+
+.boss-trophy.hidden {
+  display: none;
+}
+
+.trophy-icon {
+  position: relative;
+  z-index: 2;
+  font-size: 105px;
+  line-height: 1.2;
+  filter:
+    drop-shadow(0 0 8px #ffe66d)
+    drop-shadow(0 0 18px #ffae00)
+    drop-shadow(0 0 32px #ff55b8);
+  animation: trophy-float 1.8s ease-in-out infinite;
+}
+
+.trophy-glow {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #ffcf33,
+    #ff55b8,
+    #8b5cff,
+    #35d9ff,
+    #62f5a5,
+    #ffcf33
+  );
+  filter: blur(30px);
+  opacity: 0.65;
+  animation: trophy-rainbow 3s linear infinite;
+}
+
+.trophy-sparkles {
+  position: relative;
+  z-index: 2;
+  color: #ffd84d;
+  font-size: 24px;
+  text-shadow: 0 0 12px #ffdc55;
+  animation: trophy-sparkle 1s ease-in-out infinite alternate;
+}
+
+.trophy-label {
+  position: relative;
+  z-index: 2;
+  margin-top: 8px;
+  padding: 7px 20px;
+  border-radius: 30px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg, #e99a18, #f04e9b, #7654df);
+  box-shadow: 0 0 20px #ffb52e88;
+}
+
+@keyframes trophy-enter {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes trophy-float {
+  0%, 100% { transform: translateY(0) rotate(-5deg); }
+  50% { transform: translateY(-12px) rotate(5deg); }
+}
+
+@keyframes trophy-rainbow {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes trophy-sparkle {
+  from { opacity: 0.55; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.15); }
+}

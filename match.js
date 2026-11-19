@@ -235,6 +235,7 @@ function unlockAchievement(id) {
 
   achievements.push(id);
   saveProgress();
+  renderAchievements();
 
   $("gameMessage").textContent =
     `${achievement.emoji} ACHIEVEMENT UNLOCKED: ${achievement.name}!`;
@@ -1903,7 +1904,18 @@ if (won) {
   }
 }
 
-  $("resultEmoji").textContent = won ? "🎉" : "💪";
+$("resultEmoji").textContent =
+  won && isBossLevel ? "" : won ? "🎉" : "💪";
+
+const bossTrophy = document.getElementById("bossTrophy");
+
+if (bossTrophy) {
+  bossTrophy.classList.toggle("hidden", !(won && isBossLevel));
+}
+$("resultOverlay").classList.toggle(
+  "boss-victory",
+  won && isBossLevel
+);
   if (won && isBossLevel) {
   playArcadeSound("bossVictory");
 } else if (won) {
