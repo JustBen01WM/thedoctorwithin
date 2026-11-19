@@ -612,6 +612,7 @@ function generateBoard() {
 /* =========================================
    RENDER BOARD
 ========================================= */
+
 function renderBoard() {
   const boardElement = $("gameBoard");
 
@@ -630,34 +631,25 @@ function renderBoard() {
     }
   }
 
-  // Update existing tiles without rebuilding the board.
+  // Update only properties that have actually changed.
   for (let row = 0; row < SIZE; row++) {
     for (let col = 0; col < SIZE; col++) {
       const index = indexOf(row, col);
       const tile = boardElement.children[index];
       const tileData = board[row][col];
 
-      tile.className = "tile";
-      tile.textContent = "";
-      tile.removeAttribute("aria-label");
+      let desiredClass = "tile";
+      let emoji = "";
+      let label = "";
 
       if (tileData) {
-        tile.textContent = tileData.special
-          ? SPECIALS[tileData.special]
-          : TILE_TYPES[tileData.type].emoji;
-
-        tile.setAttribute(
-          "aria-label",
-          tileData.special
-            ? `${tileData.special} power-up`
-            : TILE_TYPES[tileData.type].name
-        );
-
         if (tileData.special) {
-          tile.classList.add(
-            "special-tile",
-            `special-${tileData.special}`
-          );
+          emoji = SPECIALS[tileData.special];
+          label = `${tileData.special} power-up`;
+          desiredClass += ` special-tile special-${tileData.special}`;
+        } else {
+          emoji = TILE_TYPES[tileData.type].emoji;
+          label = TILE_TYPES[tileData.type].name;
         }
       }
 
@@ -666,10 +658,30 @@ function renderBoard() {
         selectedTile.row === row &&
         selectedTile.col === col
       ) {
-        tile.classList.add("selected");
+        desiredClass += " selected";
       }
 
-      tile.disabled = busy || levelFinished;
+      if (tile.className !== desiredClass) {
+        tile.className = desiredClass;
+      }
+
+      if (tile.textContent !== emoji) {
+        tile.textContent = emoji;
+      }
+
+      if (label) {
+        if (tile.getAttribute("aria-label") !== label) {
+          tile.setAttribute("aria-label", label);
+        }
+      } else if (tile.hasAttribute("aria-label")) {
+        tile.removeAttribute("aria-label");
+      }
+
+      const shouldDisable = busy || levelFinished;
+
+      if (tile.disabled !== shouldDisable) {
+        tile.disabled = shouldDisable;
+      }
     }
   }
 }
@@ -1032,7 +1044,6 @@ async function swapTiles(first, second) {
   if (busy || levelFinished || moves <= 0) return;
 
   busy = true;
-  renderBoard();
 
   const firstTile = board[first.row][first.col];
   const secondTile = board[second.row][second.col];
@@ -1040,7 +1051,7 @@ async function swapTiles(first, second) {
   swapPositions(first, second);
   renderBoard();
 
-  await wait(140);
+  await wait(90);
 
   const specialSwap =
     Boolean(firstTile?.special) ||
