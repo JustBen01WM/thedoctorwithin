@@ -48,6 +48,7 @@ let bossTimerInterval = null;
 let bossTimeLeft = 300;
 let bossTimerStarted = false;
 let returnLevel = null;
+let unlockedLevel = 1;
 
 /* =====================================
    DR AFOR - MEDICAL CAREER SYSTEM
@@ -184,6 +185,10 @@ function loadSave() {
       coins = Math.max(0, Number(saved.coins) || 0);
       totalXP = Math.max(0, Number(saved.xp) || 0);
       level = Math.max(1, Number(saved.level) || 1);
+      unlockedLevel = Math.max(
+  level,
+  Number(saved.unlockedLevel) || level
+);
       achievements = Array.isArray(saved.achievements)
   ? saved.achievements
   : [];
@@ -283,6 +288,7 @@ function saveProgress() {
       coins,
       xp: totalXP,
       level,
+      unlockedLevel,
       heartsCollected,
       targetHearts,
       completedDestinations: Math.min(level - 1, 6),
@@ -2161,28 +2167,9 @@ $("previousLevelButton").addEventListener("click", () => {
     return;
   }
 
-  returnLevel = level;
-
   level--;
   saveProgress();
   startLevel();
-
-  $("returnLevelButton").classList.remove("hidden");
-
-  playSound(450);
-});
-
-// INSERT THE RETURN BUTTON LISTENER HERE
-$("returnLevelButton").addEventListener("click", () => {
-  if (busy || returnLevel === null) return;
-
-  level = returnLevel;
-  returnLevel = null;
-
-  saveProgress();
-  startLevel();
-
-  $("returnLevelButton").classList.add("hidden");
 
   playSound(450);
 });
@@ -2191,8 +2178,16 @@ $("nextLevelButton").addEventListener("click", () => {
   const won = $("nextLevelButton").dataset.won === "true";
 
   if (won) {
+    unlockedLevel = Math.max(unlockedLevel, level + 1);
     level++;
     saveProgress();
+  } else if (level < unlockedLevel) {
+    level++;
+    saveProgress();
+  } else {
+    $("gameMessage").textContent =
+      "Complete this level first to unlock the next one, Dr Afor!";
+    return;
   }
 
   startLevel();
