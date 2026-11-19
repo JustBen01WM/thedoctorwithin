@@ -1845,6 +1845,62 @@ function checkGameStatus() {
   }
 }
 
+
+function showVictoryConfetti() {
+  const oldConfetti = document.getElementById("victoryConfetti");
+
+  if (oldConfetti) {
+    oldConfetti.remove();
+  }
+
+  const container = document.createElement("div");
+  container.id = "victoryConfetti";
+  document.body.appendChild(container);
+
+  const colors = [
+    "#ff3d8b",
+    "#ffd447",
+    "#35c9ff",
+    "#65e879",
+    "#ff8735",
+    "#a875ff",
+    "#ffffff"
+  ];
+
+  for (let i = 0; i < 120; i++) {
+    const piece = document.createElement("span");
+
+    piece.className = "confetti-piece";
+
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.backgroundColor =
+      colors[Math.floor(Math.random() * colors.length)];
+
+    piece.style.animationDelay = `${Math.random() * 1.5}s`;
+    piece.style.animationDuration =
+      `${3 + Math.random() * 2}s`;
+
+    piece.style.setProperty(
+      "--drift",
+      `${Math.random() * 300 - 150}px`
+    );
+
+    piece.style.setProperty(
+      "--spin",
+      `${Math.random() * 1440 - 720}deg`
+    );
+
+    piece.style.width = `${6 + Math.random() * 7}px`;
+    piece.style.height = `${10 + Math.random() * 10}px`;
+
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => {
+    container.remove();
+  }, 7000);
+}
+
 function finishLevel(won) {
   if (levelFinished) return;
 
@@ -1987,6 +2043,9 @@ $("nextLevelButton").textContent =
 $("resultNextLevelButton").dataset.won = String(won);
 
   $("resultOverlay").classList.remove("hidden");
+  if (won) {
+  showVictoryConfetti();
+}
 
   // Unlock Dr Afor's personal letter after her first victory.
 if (won && !localStorage.getItem("aforLetterUnlocked")) {
@@ -2163,7 +2222,7 @@ $("previousLevelButton").addEventListener("click", () => {
 
   if (level <= 1) {
     $("gameMessage").textContent =
-      "You're already at Level 1, Dr Sarah!";
+      "You're already at Level 1, Dr Afor!";
     return;
   }
 
