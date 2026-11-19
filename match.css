@@ -285,29 +285,6 @@ button {
   font-size: 11px;
 }
 
-.board-frame {
-  position: relative;
-  overflow: hidden;
-  isolation: isolate;
-  padding: 8px;
-  border: 2px solid #ffffff18;
-  border-radius: 19px;
-  background: #0d1b30;
-}
-
-.game-board {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: 5px;
-  width: 100%;
-  aspect-ratio: 1;
-  touch-action: manipulation;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-
-
 .tile {
   display: grid;
   place-items: center;
@@ -2459,4 +2436,175 @@ body.world-level-20 {
   box-shadow:
     inset 0 3px 5px #ffffff40,
     inset 0 -2px 0 #00000030;
+}
+
+/* =========================================
+   DR AFOR'S MEDICAL MATCH
+   PASTEL CANDY WORLD DESIGN
+========================================= */
+
+/* VIBRANT WORLD BACKGROUNDS */
+
+body.world-level-1,
+body.world-level-6,
+body.world-level-10 {
+  background:
+    radial-gradient(ellipse at 15% 15%, #ff83bd 0%, transparent 42%),
+    radial-gradient(ellipse at 85% 75%, #55dce0 0%, transparent 45%),
+    linear-gradient(135deg, #392d75, #75438e, #263e75);
+}
+
+body.world-level-2,
+body.world-level-9,
+body.world-level-14 {
+  background:
+    radial-gradient(ellipse at 15% 15%, #ff9caa 0%, transparent 43%),
+    radial-gradient(ellipse at 85% 80%, #ffca8e 0%, transparent 45%),
+    linear-gradient(135deg, #75345f, #a34c75, #593c79);
+}
+
+body.world-level-3,
+body.world-level-15,
+body.world-level-19 {
+  background:
+    radial-gradient(ellipse at 15% 15%, #55dce0 0%, transparent 43%),
+    radial-gradient(ellipse at 85% 80%, #8b9bff 0%, transparent 45%),
+    linear-gradient(135deg, #254b83, #376a91, #303c79);
+}
+
+body.world-level-4,
+body.world-level-11,
+body.world-level-17 {
+  background:
+    radial-gradient(ellipse at 15% 15%, #8ce6ae 0%, transparent 43%),
+    radial-gradient(ellipse at 85% 80%, #70d9dc 0%, transparent 45%),
+    linear-gradient(135deg, #235d67, #397d70, #345b79);
+}
+
+body.world-level-5,
+body.world-level-12,
+body.world-level-18,
+body.world-level-20 {
+  background:
+    radial-gradient(ellipse at 15% 15%, #ffd47d 0%, transparent 43%),
+    radial-gradient(ellipse at 85% 80%, #ff91b5 0%, transparent 45%),
+    linear-gradient(135deg, #795079, #9a5d79, #55477c);
+}
+
+body.world-level-7,
+body.world-level-13,
+body.world-level-16 {
+  background:
+    radial-gradient(ellipse at 15% 15%, #c29bff 0%, transparent 43%),
+    radial-gradient(ellipse at 85% 80%, #ff9acb 0%, transparent 45%),
+    linear-gradient(135deg, #51447f, #76528d, #344a7c);
+}
+
+/* COLOURFUL BOARD FRAME */
+
+.board-frame {
+  padding: 11px;
+  border: 3px solid #f6b6e2;
+  border-radius: 26px;
+
+  background:
+    radial-gradient(circle at 10% 0%, #ffb6dc, transparent 48%),
+    radial-gradient(circle at 100% 100%, #65e4e3, transparent 48%),
+    linear-gradient(145deg, #8255a9, #514a91 55%, #285c83);
+
+  box-shadow:
+    inset 0 3px 5px #ffffff65,
+    inset 0 -8px 15px #29134e65,
+    0 0 0 3px #ffffff25,
+    0 12px 35px #17102e75,
+    0 0 35px #ff9fd855;
+}
+
+/* COLOURFUL GAME ARENA */
+
+.game-board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 5px;
+
+  width: 100%;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  padding: 8px;
+
+  border: 2px solid #e9c7f5;
+  border-radius: 18px;
+
+  background:
+    radial-gradient(circle at 10% 10%, #704d9b, transparent 55%),
+    radial-gradient(circle at 90% 90%, #246b83, transparent 55%),
+    linear-gradient(145deg, #302e68, #29254e 55%, #17475d);
+
+  box-shadow:
+    inset 0 4px 15px #100b2d99,
+    inset 0 0 25px #e9a9ff25,
+    0 3px 8px #ffffff25;
+}
+
+/* BOSS BATTLE WARNING BANNER */
+#bossTimerBanner {
+  display: none;
+}
+
+#bossTimerBanner.boss-banner-active {
+  position: fixed;
+  top: 85px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  width: min(92%, 430px);
+  padding: 14px 18px;
+  border: 2px solid #ffd36a;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #a91f35, #ed493e, #a91f35);
+  color: white;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  box-shadow: 0 8px 25px #0008, 0 0 20px #ff573d88;
+  animation: boss-banner-wave 1.2s ease-in-out infinite;
+}
+
+.boss-banner-title {
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.boss-banner-message {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#bossTimerDisplay {
+  font-size: 30px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  color: #fff2a8;
+}
+
+#bossTimerBanner.boss-timer-danger {
+  background: linear-gradient(135deg, #710d20, #e00025, #710d20);
+  border-color: #fff;
+  animation: boss-banner-wave 0.45s ease-in-out infinite;
+}
+
+@keyframes boss-banner-wave {
+  0%, 100% { transform: translateX(-50%) rotate(-1deg); }
+  50% { transform: translateX(-50%) rotate(1deg); }
+}
+
+@media (max-width: 600px) {
+  #bossTimerBanner.boss-banner-active {
+    top: 75px;
+    width: 88%;
+    padding: 10px;
+  }
 }

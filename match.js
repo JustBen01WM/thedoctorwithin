@@ -44,6 +44,9 @@ let level = 1;
 let coins = 0;
 let totalXP = 0;
 let achievements = [];
+let bossTimerInterval = null;
+let bossTimeLeft = 300;
+let bossTimerStarted = false;
 
 /* =====================================
    DR AFOR - MEDICAL CAREER SYSTEM
@@ -153,7 +156,11 @@ function coordinates(index) {
 }
 
 function randomType() {
-  return Math.floor(Math.random() * TILE_TYPES.length);
+  const roll = Math.random();
+
+  if (roll < 0.25) return 0; // Heart — 25%
+
+  return 1 + Math.floor(Math.random() * 7);
 }
 
 function makeTile(type = randomType(), special = null) {
@@ -1047,6 +1054,11 @@ async function swapTiles(first, second) {
   moves--;
   updateStats();
 
+if (level % 5 === 0 && !bossTimerStarted) {
+  bossTimerStarted = true;
+  startBossTimer();
+}
+
   currentCombo = 0;
 
   const runId = gameRunId;
@@ -1828,6 +1840,12 @@ function finishLevel(won) {
   if (levelFinished) return;
 
   levelFinished = true;
+  stopBossTimer();
+
+const bossBanner = document.getElementById("bossTimerBanner");
+if (bossBanner) {
+  bossBanner.classList.remove("boss-banner-active");
+}
   busy = false;
   selectedTile = null;
 
@@ -1902,13 +1920,39 @@ $("resultTitle").textContent = won
   ? "Dr Afor, YOU DID IT! ❤️"
   : "Keep believing, Dr Afor! One day at a time!";
 
-  $("resultMessage").textContent = won
-  ? "This is only the beginning, Dr Afor. Never stop believing in the amazing doctor you're becoming. I'm proud of you! ❤️"
-  : `Every great doctor faces challenges, Dr Afor. Don't give up on your dream. I'm rooting for you! ❤️`;
+  
+const LEVEL_VICTORY_MESSAGES = [
+  "Every great doctor starts with a dream. Keep going, Dr Afor!",
+  "One step closer to the white coat!",
+  "Your dedication today shapes tomorrow's doctor.",
+  "Every challenge conquered makes you stronger.",
+  "The world needs your courage and compassion.",
+  "Little victories. Big dreams. Keep rising!",
+  "Your journey is just getting started!",
+  "Behind every great doctor is a story of determination.",
+  "Keep chasing the dream. Lives may one day depend on it.",
+  "Another level conquered. Another step towards greatness!",
+  "Believe in yourself. Your future is bright!",
+  "The doctor you're dreaming of is taking shape!",
+  "Your hard work is building something extraordinary.",
+  "Never stop learning. Never stop believing!",
+  "One day, you'll make a difference. Keep going!",
+  "You're doing amazing, Dr Afor!",
+  "No mountain too high, no valley too deep. Keep climbing, Dr Afor!",
+  "The journey of a thousand miles begins with a single step. Keep going, Dr Afor!",
+  "You're on your way to becoming a medical marvel, Dr Afor!",
+  "No sea too rough, no road too tough. Keep sailing, Dr Afor!",
+  "Keep your stethoscope close and your dreams closer, Dr Afor!",
+  "One day at a time, Dr Afor! Keep going."
+];
 
+if (won) {
+  $("resultMessage").textContent =
+    LEVEL_VICTORY_MESSAGES[(level - 1) % LEVEL_VICTORY_MESSAGES.length];
+}
   if (rankPromoted) {
   $("resultEyebrow").textContent = "🎓 CAREER PROMOTION!";
-  $("resultTitle").textContent = "Congratulations, Dr Sarah!";
+  $("resultTitle").textContent = "Congratulations, Dr Afor!";
   $("resultMessage").textContent =
     `You've been promoted to ${newRank.name}! Your dedication is taking you closer to your dream.`;
 }
@@ -1944,12 +1988,82 @@ if (won && !localStorage.getItem("aforLetterUnlocked")) {
   renderBoard();
 }
 
+function stopBossTimer() {
+  if (bossTimerInterval) {
+    clearInterval(bossTimerInterval);
+    bossTimerInterval = null;
+  }
+}
+
+function startBossTimer() {
+  stopBossTimer();
+
+ bossTimeLeft = 300;
+
+  let banner = document.getElementById("bossTimerBanner");
+
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "bossTimerBanner";
+    banner.innerHTML = `
+      <span class="boss-banner-title">🚨 BOSS BATTLE!</span>
+      <span class="boss-banner-message">Defeat the challenge before time runs out!</span>
+      <span id="bossTimerDisplay">05:00</span>
+    `;
+    document.body.appendChild(banner);
+  }
+
+  banner.classList.remove("hidden");
+  banner.classList.add("boss-banner-active");
+
+  const display = document.getElementById("bossTimerDisplay");
+
+  function updateTimer() {
+    const minutes = Math.floor(bossTimeLeft / 60);
+    const seconds = bossTimeLeft % 60;
+
+    display.textContent =
+      `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+    if (bossTimeLeft <= 30) {
+      banner.classList.add("boss-timer-danger");
+    } else {
+      banner.classList.remove("boss-timer-danger");
+    }
+  }
+
+  updateTimer();
+
+  bossTimerInterval = setInterval(() => {
+    if (levelFinished) {
+      stopBossTimer();
+      return;
+    }
+
+    bossTimeLeft--;
+    updateTimer();
+
+    if (bossTimeLeft <= 0) {
+      stopBossTimer();
+      finishLevel(false);
+    }
+  }, 1000);
+}
+
 /* =========================================
    START / RESTART
 ========================================= */
 
 function startLevel() {
   gameRunId++;
+stopBossTimer();
+
+const oldBossBanner = document.getElementById("bossTimerBanner");
+if (oldBossBanner) {
+  oldBossBanner.classList.remove("boss-banner-active");
+}
+
+bossTimerStarted = false;
 
   selectedTile = null;
   busy = false;
@@ -2002,10 +2116,7 @@ $("gameMessage").textContent =
   generateBoard();
   updateStats();
   renderBoard();
-  if (isBossLevel) {
-  setTimeout(showBossAnnouncement, 400);
-}
-
+ 
 if (isBossLevel) {
   $("gameMessage").textContent =
     "🚨 BOSS LEVEL! Collect the required hearts before your moves run out!";
@@ -2128,7 +2239,7 @@ function setupProgressTransfer() {
     const link = document.createElement("a");
 
     link.href = url;
-    link.download = "dr-sarah-medical-match-save.json";
+    link.download = "dr-afor-medical-match-save.json";
     link.click();
 
     URL.revokeObjectURL(url);
