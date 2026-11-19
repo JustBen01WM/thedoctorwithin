@@ -685,7 +685,6 @@ transition: transform 0.11s ease;
 .tile {
   position: relative;
   overflow: hidden;
-  will-change: transform, opacity, filter;
   transition:
     transform 0.18s cubic-bezier(.2,.8,.2,1),
     opacity 0.18s ease,

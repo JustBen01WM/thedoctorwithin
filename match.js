@@ -1048,18 +1048,94 @@ async function swapTiles(first, second) {
   const firstTile = board[first.row][first.col];
   const secondTile = board[second.row][second.col];
 
-  swapPositions(first, second);
-  renderBoard();
-
-  await wait(90);
-
   const specialSwap =
     Boolean(firstTile?.special) ||
     Boolean(secondTile?.special);
 
+  swapPositions(first, second);
+  renderBoard();
+
   if (!specialSwap && findMatches().size === 0) {
     swapPositions(first, second);
     renderBoard();
+
+    $("gameMessage").textContent =
+      "No match yet! Try another pair.";
+
+    playSound(180, 0.1);
+
+    busy = false;
+    renderBoard();
+    return;
+  }
+
+  moves--;
+  updateStats();
+
+  if (level % 5 === 0 && !bossTimerStarted) {
+    bossTimerStarted = true;
+    startBossTimer();
+  }
+
+  currentCombo = 0;
+
+  const runId = gameRunId;
+
+  if (firstTile?.special && secondTile?.special) {
+    const affected = new Set();
+
+    activateSpecialCombo(
+      first,
+      second,
+      firstTile,
+      secondTile,
+      affected
+    );
+
+    await clearCells(affected, runId);
+
+  } else if (specialSwap) {
+    const affected = new Set();
+    const triggered = new Set();
+
+    if (firstTile?.special) {
+      activateSpecial(
+        second,
+        secondTile?.type,
+        affected,
+        triggered
+      );
+    }
+
+    if (secondTile?.special) {
+      activateSpecial(
+        first,
+        firstTile?.type,
+        affected,
+        triggered
+      );
+    }
+
+    await clearCells(affected, runId);
+  }
+
+  if (runId !== gameRunId) return;
+
+  await clearCascades(runId, second);
+
+  if (runId !== gameRunId) return;
+
+  busy = false;
+  renderBoard();
+  checkGameStatus();
+}
+
+function swapPositions(first, second) {
+  const temporary = board[first.row][first.col];
+
+  board[first.row][first.col] = board[second.row][second.col];
+  board[second.row][second.col] = temporary;
+}
 
     $("gameMessage").textContent =
       "No match yet! Try another pair.";
