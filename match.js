@@ -1137,79 +1137,6 @@ function swapPositions(first, second) {
   board[second.row][second.col] = temporary;
 }
 
-    $("gameMessage").textContent =
-      "No match yet! Try another pair.";
-
-    playSound(180, 0.1);
-
-    busy = false;
-    renderBoard();
-    return;
-  }
-
-  moves--;
-  updateStats();
-
-if (level % 5 === 0 && !bossTimerStarted) {
-  bossTimerStarted = true;
-  startBossTimer();
-}
-
-  currentCombo = 0;
-
-  const runId = gameRunId;
-
-  if (firstTile?.special && secondTile?.special) {
-    // Two power-ups combine!
-    const affected = new Set();
-
-    activateSpecialCombo(
-      first,
-      second,
-      firstTile,
-      secondTile,
-      affected
-    );
-
-    await clearCells(affected, runId);
-
-  } else if (specialSwap) {
-    // One power-up combines with a normal tile.
-    const affected = new Set();
-    const triggered = new Set();
-
-    if (firstTile?.special) {
-      activateSpecial(
-        second,
-        secondTile?.type,
-        affected,
-        triggered
-      );
-    }
-
-    if (secondTile?.special) {
-      activateSpecial(
-        first,
-        firstTile?.type,
-        affected,
-        triggered
-      );
-    }
-
-    await clearCells(affected, runId);
-  }
-
-  if (runId !== gameRunId) return;
-
-  await clearCascades(runId, second);
-
-  if (runId !== gameRunId) return;
-
-  busy = false;
-  renderBoard();
-  checkGameStatus();
-}
-
 function swapPositions(first, second) {
   const temporary = board[first.row][first.col];
 
@@ -2125,7 +2052,7 @@ if (won) {
   $("resultXP").textContent = earnedXP;
 
 $("nextLevelButton").textContent =
-    won ? "Continue to Next Level →" : "🔄 RETRY THIS LEVEL";
+    won ? "Continue to Next Level →" : "→ NEXT LEVEL";
 
 $("resultNextLevelButton").dataset.won = String(won);
 
